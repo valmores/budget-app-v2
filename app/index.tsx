@@ -181,7 +181,7 @@ export default function Login() {
         } catch {
             // ignore
         }
-        router.replace('/(tabs)');
+        router.replace('/home');
     };
 
     // Stable reference so PasswordInputRow (React.memo) does not re-render

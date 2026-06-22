@@ -216,7 +216,7 @@ export default function Register() {
             // ignore
         }
         // Redirect to tabs upon registration mock
-        router.replace('/(tabs)');
+        router.replace('/home');
     };
 
     const handleTogglePasswordVisibility = useCallback(async () => {
