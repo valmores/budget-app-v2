@@ -1,19 +1,19 @@
-import { useState, useRef, useMemo, useCallback, memo } from 'react';
+import { Feather } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import {
-    View,
+    Animated,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    StyleSheet,
-    KeyboardAvoidingView,
-    ScrollView,
-    Platform,
-    Animated,
+    View
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 
 // ── Name Input ───────────────────────────────────────────────────────────────
 
@@ -206,6 +206,7 @@ export default function Register() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+    const [navLoading, setNavLoading] = useState(false);
 
     const handleRegister = async () => {
         try {
@@ -217,6 +218,23 @@ export default function Register() {
         }
         // Redirect to tabs upon registration mock
         router.replace('/home');
+    };
+
+    const handleGoLogin = async () => {
+        setNavLoading(true);
+
+        try {
+            if (Platform.OS !== 'web') {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
+
+            // wait for next frame so UI doesn't flash
+            await new Promise(resolve => requestAnimationFrame(resolve));
+
+            router.push('/');
+        } finally {
+            setNavLoading(false);
+        }
     };
 
     const handleTogglePasswordVisibility = useCallback(async () => {
@@ -266,7 +284,7 @@ export default function Register() {
                                 } catch {
                                     // ignore
                                 }
-                                router.back();
+                                router.replace("/");
                             }}
                             activeOpacity={0.7}
                             style={styles.backButton}
@@ -290,10 +308,10 @@ export default function Register() {
                     <View style={styles.formContainer}>
                         <NameInputRow value={name} onChangeText={setName} />
                         <View style={{ height: 13 }} />
-                        
+
                         <EmailInputRow value={email} onChangeText={setEmail} />
                         <View style={{ height: 13 }} />
-                        
+
                         <PasswordInputRow
                             value={password}
                             onChangeText={setPassword}
@@ -326,16 +344,7 @@ export default function Register() {
                             {"Already have an account? "}
                             <Text
                                 style={styles.signUpText}
-                                onPress={async () => {
-                                    try {
-                                        if (Platform.OS !== 'web') {
-                                            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        }
-                                    } catch {
-                                        // ignore
-                                    }
-                                    router.back();
-                                }}
+                                onPress={handleGoLogin}
                             >
                                 Sign In
                             </Text>

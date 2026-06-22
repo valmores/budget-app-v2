@@ -1,19 +1,19 @@
-import { useState, useRef, useMemo, useCallback, memo } from 'react';
+import { Feather } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import {
-    View,
+    Animated,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    StyleSheet,
-    KeyboardAvoidingView,
-    ScrollView,
-    Platform,
-    Animated,
+    View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT CAUSE (definitive):
@@ -172,6 +172,7 @@ export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+    const [navLoading, setNavLoading] = useState(false);
 
     const handleLogin = async () => {
         try {
@@ -182,6 +183,22 @@ export default function Login() {
             // ignore
         }
         router.replace('/home');
+    };
+    const handleGoRegister = async () => {
+        setNavLoading(true);
+
+        try {
+            if (Platform.OS !== 'web') {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
+
+            // small “frame sync delay”
+            await new Promise(resolve => requestAnimationFrame(resolve));
+
+            router.push('/register');
+        } finally {
+            setNavLoading(false);
+        }
     };
 
     // Stable reference so PasswordInputRow (React.memo) does not re-render
@@ -252,16 +269,7 @@ export default function Login() {
                             {"Don't have an account yet? "}
                             <Text
                                 style={styles.signUpText}
-                                onPress={async () => {
-                                    try {
-                                        if (Platform.OS !== 'web') {
-                                            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        }
-                                    } catch {
-                                        // ignore
-                                    }
-                                    router.push('/register');
-                                }}
+                                onPress={handleGoRegister}
                             >
                                 Sign Up
                             </Text>
