@@ -182,7 +182,7 @@ export default function Login() {
         } catch {
             // ignore
         }
-        router.replace('/home');
+        router.replace('/dashboard');
     };
     const handleGoRegister = async () => {
         setNavLoading(true);

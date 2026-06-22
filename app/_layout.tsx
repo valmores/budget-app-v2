@@ -10,18 +10,19 @@ export default function RootLayout() {
       }}
     >
       <Stack.Screen
+        name="index"
+        options={{
+          animation: 'slide_from_left',
+        }}
+      />
+      <Stack.Screen
         name="register"
         options={{
           animation: 'slide_from_right',
         }}
       />
 
-      <Stack.Screen
-        name="index"
-        options={{
-          animation: 'slide_from_left',
-        }}
-      />
+
 
       <Stack.Screen name="(app)" />
     </Stack >

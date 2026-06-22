@@ -1,9 +1,58 @@
-import { Stack } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
+import { Tabs } from 'expo-router';
 
-export default function AppLayout() {
+export default function TabLayout() {
   return (
-    <Stack>
-      <Stack.Screen name="home" options={{ headerShown: false }} />
-    </Stack>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: '#1C1C1E',
+          borderTopColor: '#2C2C2E',
+        },
+        tabBarActiveTintColor: '#ff617b',
+        tabBarInactiveTintColor: '#8E8E93',
+      }}
+    >
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: 'Dashboard',
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="layout" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="budgets_page"
+        options={{
+          title: 'Budgets',
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="list" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="analytics_page"
+        options={{
+          title: 'Analytics',
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="pie-chart" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="profile_page"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="user" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }
