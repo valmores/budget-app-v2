@@ -11,34 +11,153 @@ export default function BudgetsScreen() {
         { id: 4, title: "Utilities", spent: 1800, limit: 2500 },
     ];
 
+    const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0);
+    const totalLimit = budgets.reduce((sum, b) => sum + b.limit, 0);
+    const overallPercentage = Math.round((totalSpent / totalLimit) * 100);
+
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#f4f4f4" }} edges={["top"]}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#f8f8f8" }} edges={["top"]}>
 
             {/* HEADER */}
             <View
                 style={{
-                    height: 65,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
                     paddingHorizontal: 20,
-                    backgroundColor: "#ff617b",
-                    borderBottomLeftRadius: 18,
-                    borderBottomRightRadius: 18,
-                    elevation: 4,
-                    shadowColor: "#000",
-                    shadowOpacity: 0.15,
-                    shadowRadius: 6,
-                    shadowOffset: { width: 0, height: 3 },
+                    paddingTop: 16,
+                    paddingBottom: 20,
+                    backgroundColor: "#ffffff",
+                    borderBottomWidth: 1,
+                    borderBottomColor: "#f0f0f0",
                 }}
             >
-                <Text style={{ fontSize: 22, fontWeight: "700", color: "#fff" }}>
-                    Budgets
-                </Text>
+                <View
+                    style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 20,
+                    }}
+                >
+                    <Text
+                        style={{
+                            fontSize: 26,
+                            fontWeight: "700",
+                            color: "#1a1a2e",
+                            letterSpacing: -0.5,
+                        }}
+                    >
+                        Budgets
+                    </Text>
+                    <View
+                        style={{
+                            backgroundColor: "#FFF0F3",
+                            borderRadius: 20,
+                            paddingHorizontal: 12,
+                            paddingVertical: 5,
+                        }}
+                    >
+                        <Text
+                            style={{
+                                fontSize: 13,
+                                fontWeight: "600",
+                                color: "#ff617b",
+                            }}
+                        >
+                            {budgets.length} active
+                        </Text>
+                    </View>
+                </View>
 
-                <Text style={{ color: "#fff", fontSize: 12, opacity: 0.9 }}>
-                    {budgets.length} items
-                </Text>
+                {/* Summary Card */}
+                <View
+                    style={{
+                        backgroundColor: "#ff617b",
+                        borderRadius: 16,
+                        padding: 18,
+                    }}
+                >
+                    <View
+                        style={{
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            alignItems: "flex-end",
+                            marginBottom: 14,
+                        }}
+                    >
+                        <View>
+                            <Text
+                                style={{
+                                    fontSize: 12,
+                                    color: "rgba(255,255,255,0.75)",
+                                    letterSpacing: 0.5,
+                                    textTransform: "uppercase",
+                                    marginBottom: 4,
+                                }}
+                            >
+                                Total Spent
+                            </Text>
+                            <Text
+                                style={{
+                                    fontSize: 28,
+                                    fontWeight: "800",
+                                    color: "#fff",
+                                    letterSpacing: -0.5,
+                                }}
+                            >
+                                ₱{totalSpent.toLocaleString()}
+                            </Text>
+                        </View>
+                        <View style={{ alignItems: "flex-end" }}>
+                            <Text
+                                style={{
+                                    fontSize: 12,
+                                    color: "rgba(255,255,255,0.75)",
+                                    letterSpacing: 0.5,
+                                    textTransform: "uppercase",
+                                    marginBottom: 4,
+                                }}
+                            >
+                                Total Budget
+                            </Text>
+                            <Text
+                                style={{
+                                    fontSize: 20,
+                                    fontWeight: "700",
+                                    color: "rgba(255,255,255,0.9)",
+                                }}
+                            >
+                                ₱{totalLimit.toLocaleString()}
+                            </Text>
+                        </View>
+                    </View>
+
+                    {/* Overall Progress Bar */}
+                    <View
+                        style={{
+                            height: 4,
+                            backgroundColor: "rgba(255,255,255,0.25)",
+                            borderRadius: 2,
+                            overflow: "hidden",
+                            marginBottom: 8,
+                        }}
+                    >
+                        <View
+                            style={{
+                                width: `${overallPercentage}%`,
+                                height: "100%",
+                                backgroundColor: "#fff",
+                                borderRadius: 2,
+                            }}
+                        />
+                    </View>
+                    <Text
+                        style={{
+                            fontSize: 12,
+                            color: "rgba(255,255,255,0.75)",
+                        }}
+                    >
+                        {overallPercentage}% of total budget used
+                    </Text>
+                </View>
             </View>
 
             {/* CONTENT */}
@@ -46,10 +165,23 @@ export default function BudgetsScreen() {
                 style={{ flex: 1 }}
                 contentContainerStyle={{
                     padding: 16,
-                    paddingBottom: 120, // space for FAB
+                    paddingTop: 20,
+                    paddingBottom: 100,
                 }}
                 showsVerticalScrollIndicator={false}
             >
+                <Text
+                    style={{
+                        fontSize: 12,
+                        fontWeight: "600",
+                        color: "#9e9e9e",
+                        letterSpacing: 1,
+                        textTransform: "uppercase",
+                        marginBottom: 12,
+                    }}
+                >
+                    All Budgets
+                </Text>
                 {budgets.map((budget) => (
                     <BudgetListCard
                         key={budget.id}
@@ -62,25 +194,25 @@ export default function BudgetsScreen() {
 
             {/* FLOATING ACTION BUTTON */}
             <TouchableOpacity
-                activeOpacity={0.8}
+                activeOpacity={0.85}
                 style={{
                     position: "absolute",
-                    bottom: 25,
+                    bottom: 28,
                     right: 20,
-                    width: 65,
-                    height: 65,
-                    borderRadius: 32.5,
+                    width: 56,
+                    height: 56,
+                    borderRadius: 16,
                     backgroundColor: "#ff617b",
                     justifyContent: "center",
                     alignItems: "center",
-                    elevation: 6,
+                    elevation: 4,
                     shadowColor: "#ff617b",
-                    shadowOpacity: 0.35,
-                    shadowRadius: 10,
-                    shadowOffset: { width: 0, height: 5 },
+                    shadowOpacity: 0.4,
+                    shadowRadius: 12,
+                    shadowOffset: { width: 0, height: 4 },
                 }}
             >
-                <Feather name="plus" size={28} color="#fff" />
+                <Feather name="plus" size={24} color="#fff" />
             </TouchableOpacity>
         </SafeAreaView>
     );

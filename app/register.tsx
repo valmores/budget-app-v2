@@ -217,7 +217,7 @@ export default function Register() {
             // ignore
         }
         // Redirect to tabs upon registration mock
-        router.replace('/home');
+        router.replace('/dashboard');
     };
 
     const handleGoLogin = async () => {
