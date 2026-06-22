@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import { useTheme } from '@/context/ThemeContext';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
@@ -20,14 +21,25 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 type NameInputRowProps = {
     value: string;
     onChangeText: (text: string) => void;
+    inputBg: string;
+    inputBorder: string;
+    inputText: string;
+    inputPlaceholder: string;
 };
 
-const NameInputRow = memo(function NameInputRow({ value, onChangeText }: NameInputRowProps) {
+const NameInputRow = memo(function NameInputRow({
+    value,
+    onChangeText,
+    inputBg,
+    inputBorder,
+    inputText,
+    inputPlaceholder,
+}: NameInputRowProps) {
     const focusAnim = useRef(new Animated.Value(0)).current;
 
     const borderColor = useMemo(
-        () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: ['#2C2C2E', '#ff617b'] }),
-        [focusAnim],
+        () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: [inputBorder, '#ff617b'] }),
+        [focusAnim, inputBorder],
     );
     const iconOpacity = useMemo(
         () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
@@ -43,7 +55,7 @@ const NameInputRow = memo(function NameInputRow({ value, onChangeText }: NameInp
     }, [focusAnim]);
 
     return (
-        <Animated.View style={[styles.inputWrapper, { borderColor }]}>
+        <Animated.View style={[styles.inputWrapper, { borderColor, backgroundColor: inputBg }]}>
             <View style={styles.inputIconContainer}>
                 <Feather name="user" size={20} color="#8E8E93" />
                 <Animated.View style={[StyleSheet.absoluteFill, { opacity: iconOpacity }]}>
@@ -55,14 +67,14 @@ const NameInputRow = memo(function NameInputRow({ value, onChangeText }: NameInp
                 editable={true}
                 onChangeText={onChangeText}
                 placeholder="Full Name"
-                placeholderTextColor="#636366"
+                placeholderTextColor={inputPlaceholder}
                 autoCapitalize="words"
                 autoCorrect={false}
                 autoComplete="name"
                 textContentType="name"
                 onFocus={handleFocus}
                 onBlur={handleBlur}
-                style={styles.textInput}
+                style={[styles.textInput, { color: inputText }]}
             />
         </Animated.View>
     );
@@ -73,14 +85,25 @@ const NameInputRow = memo(function NameInputRow({ value, onChangeText }: NameInp
 type EmailInputRowProps = {
     value: string;
     onChangeText: (text: string) => void;
+    inputBg: string;
+    inputBorder: string;
+    inputText: string;
+    inputPlaceholder: string;
 };
 
-const EmailInputRow = memo(function EmailInputRow({ value, onChangeText }: EmailInputRowProps) {
+const EmailInputRow = memo(function EmailInputRow({
+    value,
+    onChangeText,
+    inputBg,
+    inputBorder,
+    inputText,
+    inputPlaceholder,
+}: EmailInputRowProps) {
     const focusAnim = useRef(new Animated.Value(0)).current;
 
     const borderColor = useMemo(
-        () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: ['#2C2C2E', '#ff617b'] }),
-        [focusAnim],
+        () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: [inputBorder, '#ff617b'] }),
+        [focusAnim, inputBorder],
     );
     const iconOpacity = useMemo(
         () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
@@ -96,7 +119,7 @@ const EmailInputRow = memo(function EmailInputRow({ value, onChangeText }: Email
     }, [focusAnim]);
 
     return (
-        <Animated.View style={[styles.inputWrapper, { borderColor }]}>
+        <Animated.View style={[styles.inputWrapper, { borderColor, backgroundColor: inputBg }]}>
             <View style={styles.inputIconContainer}>
                 <Feather name="mail" size={20} color="#8E8E93" />
                 <Animated.View style={[StyleSheet.absoluteFill, { opacity: iconOpacity }]}>
@@ -108,7 +131,7 @@ const EmailInputRow = memo(function EmailInputRow({ value, onChangeText }: Email
                 editable={true}
                 onChangeText={onChangeText}
                 placeholder="name@example.com"
-                placeholderTextColor="#636366"
+                placeholderTextColor={inputPlaceholder}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -116,7 +139,7 @@ const EmailInputRow = memo(function EmailInputRow({ value, onChangeText }: Email
                 textContentType="emailAddress"
                 onFocus={handleFocus}
                 onBlur={handleBlur}
-                style={styles.textInput}
+                style={[styles.textInput, { color: inputText }]}
             />
         </Animated.View>
     );
@@ -130,6 +153,10 @@ type PasswordInputRowProps = {
     isPasswordVisible: boolean;
     onToggleVisibility: () => void;
     placeholder: string;
+    inputBg: string;
+    inputBorder: string;
+    inputText: string;
+    inputPlaceholder: string;
 };
 
 const PasswordInputRow = memo(function PasswordInputRow({
@@ -138,12 +165,16 @@ const PasswordInputRow = memo(function PasswordInputRow({
     isPasswordVisible,
     onToggleVisibility,
     placeholder,
+    inputBg,
+    inputBorder,
+    inputText,
+    inputPlaceholder,
 }: PasswordInputRowProps) {
     const focusAnim = useRef(new Animated.Value(0)).current;
 
     const borderColor = useMemo(
-        () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: ['#2C2C2E', '#ff617b'] }),
-        [focusAnim],
+        () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: [inputBorder, '#ff617b'] }),
+        [focusAnim, inputBorder],
     );
     const iconOpacity = useMemo(
         () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
@@ -159,7 +190,7 @@ const PasswordInputRow = memo(function PasswordInputRow({
     }, [focusAnim]);
 
     return (
-        <Animated.View style={[styles.inputWrapper, { borderColor }]}>
+        <Animated.View style={[styles.inputWrapper, { borderColor, backgroundColor: inputBg }]}>
             <View style={styles.inputIconContainer}>
                 <Feather name="lock" size={20} color="#8E8E93" />
                 <Animated.View style={[StyleSheet.absoluteFill, { opacity: iconOpacity }]}>
@@ -171,7 +202,7 @@ const PasswordInputRow = memo(function PasswordInputRow({
                 editable={true}
                 onChangeText={onChangeText}
                 placeholder={placeholder}
-                placeholderTextColor="#636366"
+                placeholderTextColor={inputPlaceholder}
                 secureTextEntry={!isPasswordVisible}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -179,7 +210,7 @@ const PasswordInputRow = memo(function PasswordInputRow({
                 textContentType="password"
                 onFocus={handleFocus}
                 onBlur={handleBlur}
-                style={styles.textInput}
+                style={[styles.textInput, { color: inputText }]}
             />
             <TouchableOpacity
                 onPress={onToggleVisibility}
@@ -200,6 +231,7 @@ const PasswordInputRow = memo(function PasswordInputRow({
 
 export default function Register() {
     const router = useRouter();
+    const { colors, isDark } = useTheme();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -216,7 +248,6 @@ export default function Register() {
         } catch {
             // ignore
         }
-        // Redirect to tabs upon registration mock
         router.replace('/dashboard');
     };
 
@@ -228,9 +259,7 @@ export default function Register() {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }
 
-            // wait for next frame so UI doesn't flash
             await new Promise(resolve => requestAnimationFrame(resolve));
-
             router.push('/');
         } finally {
             setNavLoading(false);
@@ -259,8 +288,11 @@ export default function Register() {
         }
     }, []);
 
+    const bg = isDark ? '#0F0F12' : '#ffffff';
+    const glowOpacity = isDark ? 0.06 : 0.04;
+
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -270,8 +302,8 @@ export default function Register() {
                     contentContainerStyle={styles.scrollContent}
                 >
                     {/* Decorative glows */}
-                    <View style={styles.glowTop} pointerEvents="none" />
-                    <View style={styles.glowBottom} pointerEvents="none" />
+                    <View style={[styles.glowTop, { opacity: glowOpacity }]} pointerEvents="none" />
+                    <View style={[styles.glowBottom, { opacity: isDark ? 0.03 : 0.02 }]} pointerEvents="none" />
 
                     {/* Back Navigation Header */}
                     <View style={styles.navBar}>
@@ -287,9 +319,15 @@ export default function Register() {
                                 router.replace("/");
                             }}
                             activeOpacity={0.7}
-                            style={styles.backButton}
+                            style={[
+                                styles.backButton,
+                                {
+                                    backgroundColor: colors.surface,
+                                    borderColor: colors.border,
+                                },
+                            ]}
                         >
-                            <Feather name="arrow-left" size={20} color="#FFFFFF" />
+                            <Feather name="arrow-left" size={20} color={colors.textPrimary} />
                         </TouchableOpacity>
                     </View>
 
@@ -298,18 +336,34 @@ export default function Register() {
                         <View style={styles.logoIconContainer}>
                             <Feather name="user-plus" size={32} color="#ff617b" />
                         </View>
-                        <Text style={styles.logoText}>
+                        <Text style={[styles.logoText, { color: isDark ? '#FFFFFF' : '#1a1a2e' }]}>
                             CREATE<Text style={styles.logoHighlight}>ACCOUNT</Text>
                         </Text>
-                        <Text style={styles.tagline}>Elevate your financial clarity.</Text>
+                        <Text style={[styles.tagline, { color: colors.textSecondary }]}>
+                            Elevate your financial clarity.
+                        </Text>
                     </View>
 
                     {/* Form Fields */}
                     <View style={styles.formContainer}>
-                        <NameInputRow value={name} onChangeText={setName} />
+                        <NameInputRow
+                            value={name}
+                            onChangeText={setName}
+                            inputBg={colors.inputBackground}
+                            inputBorder={colors.inputBorder}
+                            inputText={colors.inputText}
+                            inputPlaceholder={colors.inputPlaceholder}
+                        />
                         <View style={{ height: 13 }} />
 
-                        <EmailInputRow value={email} onChangeText={setEmail} />
+                        <EmailInputRow
+                            value={email}
+                            onChangeText={setEmail}
+                            inputBg={colors.inputBackground}
+                            inputBorder={colors.inputBorder}
+                            inputText={colors.inputText}
+                            inputPlaceholder={colors.inputPlaceholder}
+                        />
                         <View style={{ height: 13 }} />
 
                         <PasswordInputRow
@@ -318,6 +372,10 @@ export default function Register() {
                             isPasswordVisible={isPasswordVisible}
                             onToggleVisibility={handleTogglePasswordVisibility}
                             placeholder="Create a password"
+                            inputBg={colors.inputBackground}
+                            inputBorder={colors.inputBorder}
+                            inputText={colors.inputText}
+                            inputPlaceholder={colors.inputPlaceholder}
                         />
                         <View style={{ height: 13 }} />
 
@@ -327,6 +385,10 @@ export default function Register() {
                             isPasswordVisible={isConfirmPasswordVisible}
                             onToggleVisibility={handleToggleConfirmPasswordVisibility}
                             placeholder="Confirm your password"
+                            inputBg={colors.inputBackground}
+                            inputBorder={colors.inputBorder}
+                            inputText={colors.inputText}
+                            inputPlaceholder={colors.inputPlaceholder}
                         />
 
                         <TouchableOpacity
@@ -340,7 +402,7 @@ export default function Register() {
 
                     {/* Footer */}
                     <View style={styles.footerContainer}>
-                        <Text style={styles.footerText}>
+                        <Text style={[styles.footerText, { color: colors.textSecondary }]}>
                             {"Already have an account? "}
                             <Text
                                 style={styles.signUpText}
@@ -359,7 +421,6 @@ export default function Register() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#0F0F12',
     },
     scrollContent: {
         flexGrow: 1,
@@ -374,7 +435,6 @@ const styles = StyleSheet.create({
         height: 250,
         borderRadius: 125,
         backgroundColor: '#ff617b',
-        opacity: 0.06,
     },
     glowBottom: {
         position: 'absolute',
@@ -384,7 +444,6 @@ const styles = StyleSheet.create({
         height: 200,
         borderRadius: 100,
         backgroundColor: '#ff617b',
-        opacity: 0.03,
     },
     navBar: {
         flexDirection: 'row',
@@ -395,9 +454,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#1C1C1E',
         borderWidth: 1,
-        borderColor: '#2C2C2E',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -420,7 +477,6 @@ const styles = StyleSheet.create({
     logoText: {
         fontSize: 32,
         fontWeight: '300',
-        color: '#FFFFFF',
         letterSpacing: 6,
         textAlign: 'center',
     },
@@ -430,7 +486,6 @@ const styles = StyleSheet.create({
     },
     tagline: {
         fontSize: 14,
-        color: '#8E8E93',
         marginTop: 10,
         letterSpacing: 0.5,
     },
@@ -440,9 +495,7 @@ const styles = StyleSheet.create({
     inputWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#1C1C1E',
         borderWidth: 1,
-        borderColor: '#2C2C2E',
         borderRadius: 10,
         paddingHorizontal: 20,
         height: 56,
@@ -452,7 +505,6 @@ const styles = StyleSheet.create({
     },
     textInput: {
         flex: 1,
-        color: '#FFFFFF',
         fontSize: 15,
         fontWeight: '500',
         height: '100%',
@@ -484,7 +536,6 @@ const styles = StyleSheet.create({
         marginTop: 25,
     },
     footerText: {
-        color: '#8E8E93',
         fontSize: 14,
     },
     signUpText: {
