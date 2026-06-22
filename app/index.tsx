@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import { useTheme } from '@/context/ThemeContext';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
@@ -39,17 +40,25 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 type EmailInputRowProps = {
     value: string;
     onChangeText: (text: string) => void;
+    inputBg: string;
+    inputBorder: string;
+    inputText: string;
+    inputPlaceholder: string;
 };
 
-const EmailInputRow = memo(function EmailInputRow({ value, onChangeText }: EmailInputRowProps) {
-    // useRef so the Animated.Value identity never changes across re-renders
+const EmailInputRow = memo(function EmailInputRow({
+    value,
+    onChangeText,
+    inputBg,
+    inputBorder,
+    inputText,
+    inputPlaceholder,
+}: EmailInputRowProps) {
     const focusAnim = useRef(new Animated.Value(0)).current;
 
-    // useMemo so the interpolation object is stable — prevents Animated.View
-    // from re-subscribing to the driver on each render pass
     const borderColor = useMemo(
-        () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: ['#2C2C2E', '#ff617b'] }),
-        [focusAnim],
+        () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: [inputBorder, '#ff617b'] }),
+        [focusAnim, inputBorder],
     );
     const iconOpacity = useMemo(
         () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
@@ -65,9 +74,7 @@ const EmailInputRow = memo(function EmailInputRow({ value, onChangeText }: Email
     }, [focusAnim]);
 
     return (
-        <Animated.View style={[styles.inputWrapper, { borderColor }]}>
-            {/* Dual-icon trick: gray base + pink overlay that fades via Animated opacity.
-                No state involved — only the animation driver touches opacity. */}
+        <Animated.View style={[styles.inputWrapper, { borderColor, backgroundColor: inputBg }]}>
             <View style={styles.inputIconContainer}>
                 <Feather name="mail" size={20} color="#8E8E93" />
                 <Animated.View style={[StyleSheet.absoluteFill, { opacity: iconOpacity }]}>
@@ -79,7 +86,7 @@ const EmailInputRow = memo(function EmailInputRow({ value, onChangeText }: Email
                 editable={true}
                 onChangeText={onChangeText}
                 placeholder="name@example.com"
-                placeholderTextColor="#636366"
+                placeholderTextColor={inputPlaceholder}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -87,7 +94,7 @@ const EmailInputRow = memo(function EmailInputRow({ value, onChangeText }: Email
                 textContentType="emailAddress"
                 onFocus={handleFocus}
                 onBlur={handleBlur}
-                style={styles.textInput}
+                style={[styles.textInput, { color: inputText }]}
             />
         </Animated.View>
     );
@@ -100,6 +107,10 @@ type PasswordInputRowProps = {
     onChangeText: (text: string) => void;
     isPasswordVisible: boolean;
     onToggleVisibility: () => void;
+    inputBg: string;
+    inputBorder: string;
+    inputText: string;
+    inputPlaceholder: string;
 };
 
 const PasswordInputRow = memo(function PasswordInputRow({
@@ -107,12 +118,16 @@ const PasswordInputRow = memo(function PasswordInputRow({
     onChangeText,
     isPasswordVisible,
     onToggleVisibility,
+    inputBg,
+    inputBorder,
+    inputText,
+    inputPlaceholder,
 }: PasswordInputRowProps) {
     const focusAnim = useRef(new Animated.Value(0)).current;
 
     const borderColor = useMemo(
-        () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: ['#2C2C2E', '#ff617b'] }),
-        [focusAnim],
+        () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: [inputBorder, '#ff617b'] }),
+        [focusAnim, inputBorder],
     );
     const iconOpacity = useMemo(
         () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
@@ -128,7 +143,7 @@ const PasswordInputRow = memo(function PasswordInputRow({
     }, [focusAnim]);
 
     return (
-        <Animated.View style={[styles.inputWrapper, { borderColor }]}>
+        <Animated.View style={[styles.inputWrapper, { borderColor, backgroundColor: inputBg }]}>
             <View style={styles.inputIconContainer}>
                 <Feather name="lock" size={20} color="#8E8E93" />
                 <Animated.View style={[StyleSheet.absoluteFill, { opacity: iconOpacity }]}>
@@ -140,7 +155,7 @@ const PasswordInputRow = memo(function PasswordInputRow({
                 editable={true}
                 onChangeText={onChangeText}
                 placeholder="Enter your password"
-                placeholderTextColor="#636366"
+                placeholderTextColor={inputPlaceholder}
                 secureTextEntry={!isPasswordVisible}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -148,7 +163,7 @@ const PasswordInputRow = memo(function PasswordInputRow({
                 textContentType="password"
                 onFocus={handleFocus}
                 onBlur={handleBlur}
-                style={styles.textInput}
+                style={[styles.textInput, { color: inputText }]}
             />
             <TouchableOpacity
                 onPress={onToggleVisibility}
@@ -169,6 +184,7 @@ const PasswordInputRow = memo(function PasswordInputRow({
 
 export default function Login() {
     const router = useRouter();
+    const { colors, isDark } = useTheme();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -192,7 +208,7 @@ export default function Login() {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }
 
-            // small “frame sync delay”
+            // small "frame sync delay"
             await new Promise(resolve => requestAnimationFrame(resolve));
 
             router.push('/register');
@@ -201,8 +217,6 @@ export default function Login() {
         }
     };
 
-    // Stable reference so PasswordInputRow (React.memo) does not re-render
-    // just because Login re-renders from email/password state changes.
     const handleTogglePasswordVisibility = useCallback(async () => {
         setIsPasswordVisible(prev => !prev);
         try {
@@ -214,8 +228,11 @@ export default function Login() {
         }
     }, []);
 
+    const bg = isDark ? '#0F0F12' : '#ffffff';
+    const glowOpacity = isDark ? 0.06 : 0.04;
+
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: bg }]}>
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -225,29 +242,42 @@ export default function Login() {
                     contentContainerStyle={styles.scrollContent}
                 >
                     {/* Decorative glows */}
-                    <View style={styles.glowTop} pointerEvents="none" />
-                    <View style={styles.glowBottom} pointerEvents="none" />
+                    <View style={[styles.glowTop, { opacity: glowOpacity }]} pointerEvents="none" />
+                    <View style={[styles.glowBottom, { opacity: isDark ? 0.03 : 0.02 }]} pointerEvents="none" />
 
                     {/* Logo */}
                     <View style={styles.headerContainer}>
                         <View style={styles.logoIconContainer}>
                             <Feather name="pie-chart" size={32} color="#ff617b" />
                         </View>
-                        <Text style={styles.logoText}>
+                        <Text style={[styles.logoText, { color: isDark ? '#FFFFFF' : '#1a1a2e' }]}>
                             BUDGET<Text style={styles.logoHighlight}>APP</Text>
                         </Text>
-                        <Text style={styles.tagline}>Elevate your financial clarity.</Text>
+                        <Text style={[styles.tagline, { color: colors.textSecondary }]}>
+                            Elevate your financial clarity.
+                        </Text>
                     </View>
 
                     {/* Form */}
                     <View style={styles.formContainer}>
-                        <EmailInputRow value={email} onChangeText={setEmail} />
+                        <EmailInputRow
+                            value={email}
+                            onChangeText={setEmail}
+                            inputBg={colors.inputBackground}
+                            inputBorder={colors.inputBorder}
+                            inputText={colors.inputText}
+                            inputPlaceholder={colors.inputPlaceholder}
+                        />
                         <View style={{ height: 13 }} />
                         <PasswordInputRow
                             value={password}
                             onChangeText={setPassword}
                             isPasswordVisible={isPasswordVisible}
                             onToggleVisibility={handleTogglePasswordVisibility}
+                            inputBg={colors.inputBackground}
+                            inputBorder={colors.inputBorder}
+                            inputText={colors.inputText}
+                            inputPlaceholder={colors.inputPlaceholder}
                         />
 
                         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 }}>
@@ -265,7 +295,7 @@ export default function Login() {
 
                     {/* Footer */}
                     <View style={styles.footerContainer}>
-                        <Text style={styles.footerText}>
+                        <Text style={[styles.footerText, { color: colors.textSecondary }]}>
                             {"Don't have an account yet? "}
                             <Text
                                 style={styles.signUpText}
@@ -284,7 +314,6 @@ export default function Login() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#0F0F12',
     },
     scrollContent: {
         flexGrow: 1,
@@ -299,7 +328,6 @@ const styles = StyleSheet.create({
         height: 250,
         borderRadius: 125,
         backgroundColor: '#ff617b',
-        opacity: 0.06,
     },
     glowBottom: {
         position: 'absolute',
@@ -309,7 +337,6 @@ const styles = StyleSheet.create({
         height: 200,
         borderRadius: 100,
         backgroundColor: '#ff617b',
-        opacity: 0.03,
     },
     headerContainer: {
         alignItems: 'center',
@@ -330,7 +357,6 @@ const styles = StyleSheet.create({
     logoText: {
         fontSize: 32,
         fontWeight: '300',
-        color: '#FFFFFF',
         letterSpacing: 6,
         textAlign: 'center',
     },
@@ -340,7 +366,6 @@ const styles = StyleSheet.create({
     },
     tagline: {
         fontSize: 14,
-        color: '#8E8E93',
         marginTop: 10,
         letterSpacing: 0.5,
     },
@@ -350,20 +375,16 @@ const styles = StyleSheet.create({
     inputWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#1C1C1E',
         borderWidth: 1,
-        borderColor: '#2C2C2E',  // Overridden by Animated interpolation on focus
         borderRadius: 10,
         paddingHorizontal: 20,
         height: 56,
     },
     inputIconContainer: {
-        // Provides the stacking context for the absolute-positioned pink icon overlay
         marginRight: 12,
     },
     textInput: {
         flex: 1,
-        color: '#FFFFFF',
         fontSize: 15,
         fontWeight: '500',
         height: '100%',
@@ -401,53 +422,10 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     footerText: {
-        color: '#8E8E93',
         fontSize: 14,
     },
     signUpText: {
         color: '#ff617b',
         fontWeight: '700',
-    },
-    dividerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 32,
-    },
-    dividerLine: {
-        flex: 1,
-        height: 1,
-        backgroundColor: '#2C2C2E',
-    },
-    dividerText: {
-        color: '#636366',
-        fontSize: 13,
-        paddingHorizontal: 16,
-        fontWeight: '500',
-        letterSpacing: 0.5,
-    },
-    socialRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        gap: 16,
-    },
-    socialButton: {
-        flex: 1,
-        flexDirection: 'row',
-        backgroundColor: '#1C1C1E',
-        borderWidth: 1,
-        borderColor: '#2C2C2E',
-        borderRadius: 16,
-        height: 52,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    socialIcon: {
-        marginRight: 8,
-        opacity: 0.9,
-    },
-    socialButtonText: {
-        color: '#FFFFFF',
-        fontSize: 14,
-        fontWeight: '600',
     },
 });

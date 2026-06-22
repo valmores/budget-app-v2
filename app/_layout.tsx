@@ -1,30 +1,30 @@
+import { ThemeProvider } from '@/context/ThemeContext';
 import { Stack } from 'expo-router';
 
 export default function RootLayout() {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        presentation: 'card',
-        animationTypeForReplace: 'push',
-      }}
-    >
-      <Stack.Screen
-        name="index"
-        options={{
-          animation: 'slide_from_left',
+    <ThemeProvider>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          presentation: 'card',
+          animationTypeForReplace: 'push',
         }}
-      />
-      <Stack.Screen
-        name="register"
-        options={{
-          animation: 'slide_from_right',
-        }}
-      />
-
-
-
-      <Stack.Screen name="(app)" />
-    </Stack >
+      >
+        <Stack.Screen
+          name="index"
+          options={{
+            animation: 'slide_from_left',
+          }}
+        />
+        <Stack.Screen
+          name="register"
+          options={{
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen name="(app)" />
+      </Stack>
+    </ThemeProvider>
   );
 }

@@ -1,9 +1,12 @@
 import BudgetListCard from "@/components/budgetlist_card";
+import { useTheme } from "@/context/ThemeContext";
 import { Feather } from "@expo/vector-icons";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function BudgetsScreen() {
+    const { colors } = useTheme();
+
     const budgets = [
         { id: 1, title: "Monthly Groceries", spent: 3500, limit: 5000 },
         { id: 2, title: "Transportation", spent: 1200, limit: 2000 },
@@ -16,7 +19,7 @@ export default function BudgetsScreen() {
     const overallPercentage = Math.round((totalSpent / totalLimit) * 100);
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#f8f8f8" }} edges={["top"]}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top"]}>
 
             {/* HEADER */}
             <View
@@ -24,9 +27,9 @@ export default function BudgetsScreen() {
                     paddingHorizontal: 20,
                     paddingTop: 16,
                     paddingBottom: 20,
-                    backgroundColor: "#ffffff",
+                    backgroundColor: colors.surface,
                     borderBottomWidth: 1,
-                    borderBottomColor: "#f0f0f0",
+                    borderBottomColor: colors.border,
                 }}
             >
                 <View
@@ -41,7 +44,7 @@ export default function BudgetsScreen() {
                         style={{
                             fontSize: 26,
                             fontWeight: "700",
-                            color: "#1a1a2e",
+                            color: colors.textPrimary,
                             letterSpacing: -0.5,
                         }}
                     >
@@ -49,7 +52,7 @@ export default function BudgetsScreen() {
                     </Text>
                     <View
                         style={{
-                            backgroundColor: "#FFF0F3",
+                            backgroundColor: colors.accentSubtle,
                             borderRadius: 20,
                             paddingHorizontal: 12,
                             paddingVertical: 5,
@@ -59,7 +62,7 @@ export default function BudgetsScreen() {
                             style={{
                                 fontSize: 13,
                                 fontWeight: "600",
-                                color: "#ff617b",
+                                color: colors.accent,
                             }}
                         >
                             {budgets.length} active
@@ -70,7 +73,7 @@ export default function BudgetsScreen() {
                 {/* Summary Card */}
                 <View
                     style={{
-                        backgroundColor: "#ff617b",
+                        backgroundColor: colors.accent,
                         borderRadius: 16,
                         padding: 18,
                     }}
@@ -149,12 +152,7 @@ export default function BudgetsScreen() {
                             }}
                         />
                     </View>
-                    <Text
-                        style={{
-                            fontSize: 12,
-                            color: "rgba(255,255,255,0.75)",
-                        }}
-                    >
+                    <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>
                         {overallPercentage}% of total budget used
                     </Text>
                 </View>
@@ -174,7 +172,7 @@ export default function BudgetsScreen() {
                     style={{
                         fontSize: 12,
                         fontWeight: "600",
-                        color: "#9e9e9e",
+                        color: colors.textMuted,
                         letterSpacing: 1,
                         textTransform: "uppercase",
                         marginBottom: 12,
@@ -202,11 +200,11 @@ export default function BudgetsScreen() {
                     width: 56,
                     height: 56,
                     borderRadius: 16,
-                    backgroundColor: "#ff617b",
+                    backgroundColor: colors.accent,
                     justifyContent: "center",
                     alignItems: "center",
                     elevation: 4,
-                    shadowColor: "#ff617b",
+                    shadowColor: colors.accent,
                     shadowOpacity: 0.4,
                     shadowRadius: 12,
                     shadowOffset: { width: 0, height: 4 },

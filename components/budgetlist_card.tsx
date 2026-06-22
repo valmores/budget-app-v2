@@ -1,5 +1,6 @@
 import React from "react";
 import { Text, View } from "react-native";
+import { useTheme } from "@/context/ThemeContext";
 
 type BudgetListCardProps = {
     title: string;
@@ -12,29 +13,38 @@ export default function BudgetListCard({
     spent,
     limit,
 }: BudgetListCardProps) {
+    const { colors, isDark } = useTheme();
     const percentage = Math.min((spent / limit) * 100, 100);
     const remaining = limit - spent;
     const isOverBudget = spent > limit;
 
     const progressColor = isOverBudget
-        ? "#e53935"
+        ? colors.error
         : percentage >= 80
-        ? "#FF8F00"
-        : "#ff617b";
+        ? colors.warning
+        : colors.accent;
+
+    const badgeBg = isOverBudget
+        ? isDark ? 'rgba(239,83,80,0.15)' : '#FFEBEE'
+        : percentage >= 80
+        ? isDark ? 'rgba(255,167,38,0.15)' : '#FFF8E1'
+        : colors.accentSubtle;
 
     return (
         <View
             style={{
-                backgroundColor: "#ffffff",
+                backgroundColor: colors.surface,
                 borderRadius: 16,
                 padding: 20,
                 marginBottom: 12,
                 width: "100%",
-                elevation: 1,
-                shadowColor: "#000",
-                shadowOpacity: 0.06,
+                elevation: isDark ? 0 : 1,
+                shadowColor: colors.shadow,
+                shadowOpacity: isDark ? 0 : 0.06,
                 shadowRadius: 8,
                 shadowOffset: { width: 0, height: 2 },
+                borderWidth: isDark ? 1 : 0,
+                borderColor: isDark ? colors.border : 'transparent',
             }}
         >
             {/* Top Row: Title + Percentage Badge */}
@@ -50,7 +60,7 @@ export default function BudgetListCard({
                     style={{
                         fontSize: 15,
                         fontWeight: "600",
-                        color: "#1a1a2e",
+                        color: colors.textPrimary,
                         flex: 1,
                         letterSpacing: 0.1,
                     }}
@@ -59,11 +69,7 @@ export default function BudgetListCard({
                 </Text>
                 <View
                     style={{
-                        backgroundColor: isOverBudget
-                            ? "#FFEBEE"
-                            : percentage >= 80
-                            ? "#FFF8E1"
-                            : "#FFF0F3",
+                        backgroundColor: badgeBg,
                         borderRadius: 20,
                         paddingHorizontal: 10,
                         paddingVertical: 3,
@@ -85,7 +91,7 @@ export default function BudgetListCard({
             <View
                 style={{
                     height: 4,
-                    backgroundColor: "#f0f0f0",
+                    backgroundColor: isDark ? colors.border : '#f0f0f0',
                     borderRadius: 2,
                     overflow: "hidden",
                     marginBottom: 12,
@@ -113,7 +119,7 @@ export default function BudgetListCard({
                     <Text
                         style={{
                             fontSize: 11,
-                            color: "#9e9e9e",
+                            color: colors.textMuted,
                             letterSpacing: 0.3,
                             textTransform: "uppercase",
                             marginBottom: 2,
@@ -125,7 +131,7 @@ export default function BudgetListCard({
                         style={{
                             fontSize: 15,
                             fontWeight: "700",
-                            color: "#1a1a2e",
+                            color: colors.textPrimary,
                         }}
                     >
                         ₱{spent.toLocaleString()}
@@ -136,7 +142,7 @@ export default function BudgetListCard({
                     <Text
                         style={{
                             fontSize: 11,
-                            color: "#9e9e9e",
+                            color: colors.textMuted,
                             letterSpacing: 0.3,
                             textTransform: "uppercase",
                             marginBottom: 2,
@@ -148,7 +154,7 @@ export default function BudgetListCard({
                         style={{
                             fontSize: 15,
                             fontWeight: "700",
-                            color: isOverBudget ? "#e53935" : "#43a047",
+                            color: isOverBudget ? colors.error : colors.success,
                         }}
                     >
                         ₱{Math.abs(remaining).toLocaleString()}

@@ -1,53 +1,80 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-import { Platform } from 'react-native';
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+export const ACCENT = '#ff617b';
+export const ACCENT_LIGHT = '#FFF0F3';
+export const ACCENT_DARK = 'rgba(255, 97, 123, 0.15)';
 
 export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
+    light: {
+        // Surfaces
+        background: '#f8f8f8',
+        surface: '#ffffff',
+        surfaceElevated: '#ffffff',
+        // Text
+        textPrimary: '#1a1a2e',
+        textSecondary: '#6e6e80',
+        textMuted: '#9e9e9e',
+        textInverse: '#ffffff',
+        // Borders & Dividers
+        border: '#f0f0f0',
+        divider: '#ebebeb',
+        // Input
+        inputBackground: '#f4f4f6',
+        inputBorder: '#e0e0e0',
+        inputText: '#1a1a2e',
+        inputPlaceholder: '#ababab',
+        // Accent
+        accent: ACCENT,
+        accentSubtle: ACCENT_LIGHT,
+        accentText: ACCENT,
+        // Status
+        success: '#43a047',
+        warning: '#FF8F00',
+        error: '#e53935',
+        // Tab bar
+        tabBar: '#ffffff',
+        tabBarBorder: '#f0f0f0',
+        tabBarActive: ACCENT,
+        tabBarInactive: '#b0b0b8',
+        // Icon
+        icon: '#6e6e80',
+        // Card shadow
+        shadow: '#000000',
+    },
+    dark: {
+        // Surfaces
+        background: '#0F0F12',
+        surface: '#1C1C1E',
+        surfaceElevated: '#252528',
+        // Text
+        textPrimary: '#F2F2F7',
+        textSecondary: '#A0A0AB',
+        textMuted: '#636366',
+        textInverse: '#ffffff',
+        // Borders & Dividers
+        border: '#2C2C2E',
+        divider: '#2C2C2E',
+        // Input
+        inputBackground: '#1C1C1E',
+        inputBorder: '#2C2C2E',
+        inputText: '#F2F2F7',
+        inputPlaceholder: '#636366',
+        // Accent
+        accent: ACCENT,
+        accentSubtle: ACCENT_DARK,
+        accentText: '#ff8fa0',
+        // Status
+        success: '#4CAF50',
+        warning: '#FFA726',
+        error: '#EF5350',
+        // Tab bar
+        tabBar: '#1C1C1E',
+        tabBarBorder: '#2C2C2E',
+        tabBarActive: ACCENT,
+        tabBarInactive: '#8E8E93',
+        // Icon
+        icon: '#8E8E93',
+        // Card shadow
+        shadow: '#000000',
+    },
 };
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+export type ThemeColors = typeof Colors.light;
