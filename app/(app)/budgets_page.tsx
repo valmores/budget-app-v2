@@ -8,10 +8,10 @@ export default function BudgetsScreen() {
     const { colors } = useTheme();
 
     const budgets = [
-        { id: 1, title: "Monthly Groceries", spent: 3500, limit: 5000 },
-        { id: 2, title: "Transportation", spent: 1200, limit: 2000 },
-        { id: 3, title: "Entertainment", spent: 800, limit: 1500 },
-        { id: 4, title: "Utilities", spent: 1800, limit: 2500 },
+        { id: 1, title: "June 15 - June 30, 2026", spent: 800, limit: 1500, date: "Jul 15, 2026", added_by: "Juan Dela Cruz" },
+        { id: 2, title: "July 1 - July 15, 2026", spent: 3500, limit: 5000, date: "Jul 23, 2026", added_by: "Juan Dela Cruz" },
+        { id: 3, title: "July 15 - July 30, 2026", spent: 1200, limit: 2000, date: "Jul 20, 2026", added_by: "James Bryan Valmores" },
+        { id: 4, title: "August 1 - August 15, 2026", spent: 1800, limit: 2500, date: "Jul 10, 2026", added_by: "James Bryan Valmores" },
     ];
 
     const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0);
@@ -186,6 +186,8 @@ export default function BudgetsScreen() {
                         title={budget.title}
                         spent={budget.spent}
                         limit={budget.limit}
+                        date={budget.date}
+                        added_by={budget.added_by}
                     />
                 ))}
             </ScrollView>
