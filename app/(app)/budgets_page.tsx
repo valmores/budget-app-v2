@@ -1,5 +1,6 @@
-import BudgetListCard, { BudgetItem } from "@/components/budgetlist_card";
+import BudgetListCard from "@/components/budgetlist_card";
 import { useTheme } from "@/context/ThemeContext";
+import { BudgetNode, BudgetPeriod } from "@/types/budget";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
@@ -10,14 +11,13 @@ export default function BudgetsScreen() {
 
     // navStack holds the path of budgets drilled into.
     // Empty = top-level. Last item = currently viewed parent.
-    const [navStack, setNavStack] = useState<BudgetItem[]>([]);
+    const [navStack, setNavStack] = useState<BudgetNode[]>([]);
 
-    const budgets: BudgetItem[] = [
+    const budgets: BudgetPeriod[] = [
         {
             id: 1,
             title: "June 15 - June 30, 2026",
-            spent: 800,
-            limit: 1500,
+            income: 1500,
             date: "Jul 15, 2026",
             added_by: "Juan Dela Cruz",
             subBudgets: [
@@ -25,7 +25,7 @@ export default function BudgetsScreen() {
                     id: 101,
                     title: "Groceries",
                     spent: 500,
-                    limit: 900,
+
                     date: "Jun 30, 2026",
                     added_by: "Juan Dela Cruz",
                     subBudgets: [
@@ -33,7 +33,6 @@ export default function BudgetsScreen() {
                             id: 1011,
                             title: "Meat & Seafood",
                             spent: 200,
-                            limit: 400,
                             date: "Jun 30, 2026",
                             added_by: "Juan Dela Cruz",
                             subBudgets: [],
@@ -42,7 +41,6 @@ export default function BudgetsScreen() {
                             id: 1012,
                             title: "Fruits & Vegetables",
                             spent: 180,
-                            limit: 300,
                             date: "Jun 30, 2026",
                             added_by: "Juan Dela Cruz",
                             subBudgets: [],
@@ -51,7 +49,6 @@ export default function BudgetsScreen() {
                             id: 1013,
                             title: "Pantry & Condiments",
                             spent: 120,
-                            limit: 200,
                             date: "Jun 30, 2026",
                             added_by: "Juan Dela Cruz",
                             subBudgets: [],
@@ -62,7 +59,6 @@ export default function BudgetsScreen() {
                     id: 102,
                     title: "Transportation",
                     spent: 300,
-                    limit: 600,
                     date: "Jun 30, 2026",
                     added_by: "Juan Dela Cruz",
                     subBudgets: [],
@@ -72,8 +68,7 @@ export default function BudgetsScreen() {
         {
             id: 2,
             title: "July 1 - July 15, 2026",
-            spent: 3500,
-            limit: 5000,
+            income: 5000,
             date: "Jul 23, 2026",
             added_by: "Juan Dela Cruz",
             subBudgets: [],
@@ -81,8 +76,7 @@ export default function BudgetsScreen() {
         {
             id: 3,
             title: "July 15 - July 30, 2026",
-            spent: 1200,
-            limit: 2000,
+            income: 2000,
             date: "Jul 20, 2026",
             added_by: "James Bryan Valmores",
             subBudgets: [],
@@ -90,8 +84,7 @@ export default function BudgetsScreen() {
         {
             id: 4,
             title: "August 1 - August 15, 2026",
-            spent: 1800,
-            limit: 2500,
+            income: 2500,
             date: "Jul 10, 2026",
             added_by: "James Bryan Valmores",
             subBudgets: [],
@@ -100,14 +93,36 @@ export default function BudgetsScreen() {
 
     // The active list is the subBudgets of the last item in the stack,
     // or the root budgets list when the stack is empty.
-    const currentParent = navStack.length > 0 ? navStack[navStack.length - 1] : null;
-    const activeList: BudgetItem[] = currentParent ? (currentParent.subBudgets ?? []) : budgets;
+    const currentParent = navStack?.length > 0 ? navStack[navStack?.length - 1] : null;
+    const activeList = currentParent
+        ? currentParent.subBudgets
+        : budgets;
+    const isRoot = currentParent === null;
+    const totalSpent = budgets.reduce(
+        (sum, b) => sum + getTotalSpent(b.subBudgets),
+        0
+    );
 
-    const totalSpent = activeList.reduce((sum, b) => sum + b.spent, 0);
-    const totalLimit = activeList.reduce((sum, b) => sum + b.limit, 0);
-    const overallPercentage = totalLimit > 0 ? Math.round((totalSpent / totalLimit) * 100) : 0;
+    const totalLimit = budgets.reduce(
+        (sum, b) => sum + b.income,
+        0
+    );
 
-    const handleDrillIn = (budget: BudgetItem) => {
+    const overallPercentage =
+        totalLimit > 0
+            ? Math.round((totalSpent / totalLimit) * 100)
+            : 0;
+    // const totalSpent = activeList.reduce((sum, b) => sum + b.spent, 0);
+    // const totalLimit = activeList.reduce((sum, b) => sum + b.income, 0);
+    // const overallPercentage = totalLimit > 0 ? Math.round((totalSpent / totalLimit) * 100) : 0;
+
+    function getTotalSpent(nodes: any[]): number {
+        return nodes.reduce((sum, node) => {
+            return sum + node.spent + getTotalSpent(node.subBudgets || []);
+        }, 0);
+    }
+
+    const handleDrillIn = (budget: BudgetNode) => {
         setNavStack((prev) => [...prev, budget]);
     };
 
@@ -116,7 +131,7 @@ export default function BudgetsScreen() {
     };
 
     // Label shown in the section header above the list
-    const sectionLabel = navStack.length === 0 ? "All Budgets" : "Sub-Budgets";
+    const sectionLabel = navStack?.length === 0 ? "All Budgets" : "Sub-Budgets";
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top"]}>
@@ -124,7 +139,7 @@ export default function BudgetsScreen() {
             {/* HEADER */}
             <View
                 style={{
-                    paddingHorizontal: 20,
+                    paddingHorizontal: 15,
                     paddingTop: 16,
                     paddingBottom: 20,
                     backgroundColor: colors.surface,
@@ -140,7 +155,7 @@ export default function BudgetsScreen() {
                         marginBottom: 20,
                     }}
                 >
-                    {navStack.length > 0 ? (
+                    {navStack?.length > 0 ? (
                         /* Drilled-in header: back button + breadcrumb title */
                         <TouchableOpacity
                             onPress={handleBack}
@@ -149,25 +164,25 @@ export default function BudgetsScreen() {
                         >
                             <Ionicons name="chevron-back" size={22} color={colors.accent} />
                             <View style={{ marginLeft: 4, flex: 1 }}>
-                                {/* Breadcrumb trail — shows parent titles joined by " › " */}
-                                <Text
-                                    style={{ fontSize: 11, color: colors.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}
-                                    numberOfLines={1}
-                                >
-                                    {navStack.length > 1
-                                        ? navStack.slice(0, -1).map((b) => b.title).join(" › ")
-                                        : "Budgets"}
-                                </Text>
                                 <Text
                                     style={{
-                                        fontSize: 18,
+                                        fontSize: 14,
                                         fontWeight: "700",
-                                        color: colors.textPrimary,
+                                        color: colors.textSecondary,
                                         letterSpacing: -0.3,
                                     }}
                                     numberOfLines={1}
                                 >
-                                    {currentParent!.title}
+                                    {["Budgets", ...(navStack || []).slice(0, -1).map((b) => b.title)].map((p, idx) => (
+                                        <Text key={idx}>
+                                            {idx > 0 && <Text style={{ color: colors.accent }}>{" > "}</Text>}
+                                            {p}
+                                        </Text>
+                                    ))}
+                                    <Text style={{ color: colors.accent }}>{" > "}</Text>
+                                    <Text style={{ color: colors.textPrimary }}>
+                                        {navStack?.[navStack.length - 1]?.title}
+                                    </Text>
                                 </Text>
                             </View>
                         </TouchableOpacity>
@@ -184,7 +199,7 @@ export default function BudgetsScreen() {
                             Budgets
                         </Text>
                     )}
-                    <View
+                    {/* <View
                         style={{
                             backgroundColor: colors.accentSubtle,
                             borderRadius: 20,
@@ -201,7 +216,7 @@ export default function BudgetsScreen() {
                         >
                             {activeList.length} active
                         </Text>
-                    </View>
+                    </View> */}
                 </View>
 
                 {/* Summary Card */}
@@ -318,12 +333,10 @@ export default function BudgetsScreen() {
                     <BudgetListCard
                         key={budget.id}
                         title={budget.title}
-                        spent={budget.spent}
-                        limit={budget.limit}
+                        spent={getTotalSpent(budget.subBudgets)}
                         date={budget.date}
                         added_by={budget.added_by}
                         subBudgets={budget.subBudgets ?? []}
-                        onPress={() => handleDrillIn(budget)}
                     />
                 ))}
             </ScrollView>
