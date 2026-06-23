@@ -1,7 +1,18 @@
 import { useTheme } from "@/context/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Text, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
+
+// Recursive type — a BudgetItem can have its own subBudgets of the same shape
+export type BudgetItem = {
+    id: number;
+    title: string;
+    spent: number;
+    limit: number;
+    date: string;
+    added_by: string;
+    subBudgets?: BudgetItem[];
+};
 
 type BudgetListCardProps = {
     title: string;
@@ -9,6 +20,8 @@ type BudgetListCardProps = {
     limit: number;
     date: string;
     added_by: string;
+    subBudgets?: BudgetItem[];
+    onPress?: () => void;
 };
 
 export default function BudgetListCard({
@@ -16,12 +29,16 @@ export default function BudgetListCard({
     spent,
     limit,
     date,
-    added_by
+    added_by,
+    subBudgets = [],
+    onPress,
 }: BudgetListCardProps) {
     const { colors, isDark } = useTheme();
+    // Guard against null being explicitly passed (default param only handles undefined)
+    const safeSubBudgets = subBudgets ?? [];
     const percentage = Math.min((spent / limit) * 100, 100);
-    const remaining = limit - spent;
     const isOverBudget = spent > limit;
+
     const progressColor = isOverBudget
         ? colors.error
         : percentage >= 80
@@ -34,8 +51,12 @@ export default function BudgetListCard({
             ? isDark ? 'rgba(255,167,38,0.15)' : '#FFF8E1'
             : colors.accentSubtle;
 
+    const hasSubBudgets = safeSubBudgets.length > 0;
+
     return (
-        <View
+        <TouchableOpacity
+            activeOpacity={hasSubBudgets ? 0.7 : 1}
+            onPress={hasSubBudgets ? onPress : undefined}
             style={{
                 backgroundColor: colors.surface,
                 borderRadius: 16,
@@ -124,16 +145,24 @@ export default function BudgetListCard({
                 <Text style={{ fontSize: 12, color: colors.textSecondary }}>
                     Date: {date}
                 </Text>
+
+                {/* Sub-budget count hint */}
+                {hasSubBudgets && (
+                    <Text style={{ fontSize: 11, color: colors.accent, marginTop: 4, fontWeight: "600" }}>
+                        {safeSubBudgets.length} sub-budget{safeSubBudgets.length > 1 ? "s" : ""}
+                    </Text>
+                )}
             </View>
 
-            {/* Right: Chevron centered vertically to the whole card */}
-            <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={colors.textSecondary}
-                style={{ marginLeft: 12, backgroundColor: "#2c2c2c", borderRadius: 20, padding: 5 }}
-
-            />
-        </View>
+            {/* Right: Chevron — only shown when card has sub-budgets */}
+            {hasSubBudgets && (
+                <Ionicons
+                    name="chevron-forward"
+                    size={18}
+                    color={colors.textSecondary}
+                    style={{ marginLeft: 12, backgroundColor: "#2c2c2c", borderRadius: 20, padding: 5 }}
+                />
+            )}
+        </TouchableOpacity>
     );
 }
