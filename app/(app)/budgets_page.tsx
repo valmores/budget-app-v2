@@ -8,9 +8,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function BudgetsScreen() {
     const { colors } = useTheme();
-
-    // navStack holds the path of budgets drilled into.
-    // Empty = top-level. Last item = currently viewed parent.
     const [navStack, setNavStack] = useState<(BudgetNode | BudgetPeriod)[]>([]);
 
     const budgets: BudgetPeriod[] = [
@@ -89,8 +86,6 @@ export default function BudgetsScreen() {
         },
     ];
 
-    // The active list is the subBudgets of the last item in the stack,
-    // or the root budgets list when the stack is empty.
     const currentParent = navStack?.length > 0 ? navStack[navStack?.length - 1] : null;
     const activeList = currentParent
         ? currentParent.subBudgets
@@ -106,10 +101,6 @@ export default function BudgetsScreen() {
         0
     );
 
-    const overallPercentage =
-        totalLimit > 0
-            ? Math.round((totalSpent / totalLimit) * 100)
-            : 0;
 
     const headerSpent = currentParent
         ? getTotalSpent(currentParent.subBudgets)
@@ -125,9 +116,6 @@ export default function BudgetsScreen() {
             : 0;
 
     const hasIncome = !currentParent || 'income' in currentParent;
-    // const totalSpent = activeList.reduce((sum, b) => sum + b.spent, 0);
-    // const totalLimit = activeList.reduce((sum, b) => sum + b.income, 0);
-    // const overallPercentage = totalLimit > 0 ? Math.round((totalSpent / totalLimit) * 100) : 0;
 
     function getTotalSpent(nodes: any[]): number {
         return nodes.reduce((sum, node) => {
@@ -211,24 +199,6 @@ export default function BudgetsScreen() {
                             Budgets
                         </Text>
                     )}
-                    {/* <View
-                        style={{
-                            backgroundColor: colors.accentSubtle,
-                            borderRadius: 20,
-                            paddingHorizontal: 12,
-                            paddingVertical: 5,
-                        }}
-                    >
-                        <Text
-                            style={{
-                                fontSize: 13,
-                                fontWeight: "600",
-                                color: colors.accent,
-                            }}
-                        >
-                            {activeList.length} active
-                        </Text>
-                    </View> */}
                 </View>
 
                 {/* Summary Card */}
@@ -295,7 +265,7 @@ export default function BudgetsScreen() {
                             </View>
                         )}
                     </View>
-  
+
                     {hasIncome && (
                         <>
                             {/* Overall Progress Bar */}
