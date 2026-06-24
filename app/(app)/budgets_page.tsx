@@ -11,13 +11,13 @@ export default function BudgetsScreen() {
 
     // navStack holds the path of budgets drilled into.
     // Empty = top-level. Last item = currently viewed parent.
-    const [navStack, setNavStack] = useState<BudgetNode[]>([]);
+    const [navStack, setNavStack] = useState<(BudgetNode | BudgetPeriod)[]>([]);
 
     const budgets: BudgetPeriod[] = [
         {
             id: 1,
             title: "June 15 - June 30, 2026",
-            income: 1500,
+            income: 10000,
             date: "Jul 15, 2026",
             added_by: "Juan Dela Cruz",
             subBudgets: [
@@ -68,7 +68,7 @@ export default function BudgetsScreen() {
         {
             id: 2,
             title: "July 1 - July 15, 2026",
-            income: 5000,
+            income: 15000,
             date: "Jul 23, 2026",
             added_by: "Juan Dela Cruz",
             subBudgets: [],
@@ -76,7 +76,7 @@ export default function BudgetsScreen() {
         {
             id: 3,
             title: "July 15 - July 30, 2026",
-            income: 2000,
+            income: 20000,
             date: "Jul 20, 2026",
             added_by: "James Bryan Valmores",
             subBudgets: [],
@@ -84,7 +84,7 @@ export default function BudgetsScreen() {
         {
             id: 4,
             title: "August 1 - August 15, 2026",
-            income: 2500,
+            income: 13000,
             date: "Jul 10, 2026",
             added_by: "James Bryan Valmores",
             subBudgets: [],
@@ -122,7 +122,7 @@ export default function BudgetsScreen() {
         }, 0);
     }
 
-    const handleDrillIn = (budget: BudgetNode) => {
+    const handleDrillIn = (budget: BudgetNode | BudgetPeriod) => {
         setNavStack((prev) => [...prev, budget]);
     };
 
@@ -173,16 +173,14 @@ export default function BudgetsScreen() {
                                     }}
                                     numberOfLines={1}
                                 >
-                                    {["Budgets", ...(navStack || []).slice(0, -1).map((b) => b.title)].map((p, idx) => (
-                                        <Text key={idx}>
-                                            {idx > 0 && <Text style={{ color: colors.accent }}>{" > "}</Text>}
-                                            {p}
+                                    {(navStack || []).map((b, idx) => (
+                                        <Text key={b.id}>
+                                            {idx > 0 && <Text style={{ color: colors.accent }}>{' > '}</Text>}
+                                            <Text style={{ color: idx === navStack.length - 1 ? colors.textPrimary : colors.textSecondary }}>
+                                                {b.title}
+                                            </Text>
                                         </Text>
                                     ))}
-                                    <Text style={{ color: colors.accent }}>{" > "}</Text>
-                                    <Text style={{ color: colors.textPrimary }}>
-                                        {navStack?.[navStack.length - 1]?.title}
-                                    </Text>
                                 </Text>
                             </View>
                         </TouchableOpacity>
@@ -337,6 +335,9 @@ export default function BudgetsScreen() {
                         date={budget.date}
                         added_by={budget.added_by}
                         subBudgets={budget.subBudgets ?? []}
+                        showPercentage={isRoot}
+                        income={'income' in budget ? (budget as BudgetPeriod).income : undefined}
+                        onPress={() => handleDrillIn(budget)}
                     />
                 ))}
             </ScrollView>

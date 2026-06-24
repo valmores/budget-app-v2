@@ -60,16 +60,35 @@ export default function BudgetListCard({
                     {title}
                 </Text>
 
-                {/* SPENT ONLY */}
-                <Text style={{ marginTop: 4, color: colors.textSecondary }}>
-                    Spent: ₱{spent.toLocaleString()}
-                </Text>
-
-                {/* OPTIONAL PERCENT (ROOT ONLY) */}
+                {/* OPTIONAL PROGRESS BAR & PERCENT */}
                 {percentage !== null && (
-                    <Text style={{ marginTop: 4, color: progressColor, fontWeight: "600" }}>
-                        {Math.round(percentage)}%
-                    </Text>
+                    <View style={{ marginTop: 8, marginBottom: 8 }}>
+                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                            <Text style={{ fontSize: 13, fontWeight: "600", color: progressColor }}>
+                                {Math.round(percentage)}% spent
+                            </Text>
+                            <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+                                ₱{spent.toLocaleString()} of ₱{income?.toLocaleString()}
+                            </Text>
+                        </View>
+                        <View
+                            style={{
+                                height: 6,
+                                backgroundColor: isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.06)",
+                                borderRadius: 3,
+                                overflow: "hidden",
+                            }}
+                        >
+                            <View
+                                style={{
+                                    width: `${percentage}%`,
+                                    height: "100%",
+                                    backgroundColor: progressColor,
+                                    borderRadius: 3,
+                                }}
+                            />
+                        </View>
+                    </View>
                 )}
 
                 <Text style={{ fontSize: 12, color: colors.textSecondary }}>
@@ -80,11 +99,6 @@ export default function BudgetListCard({
                     Date: {date}
                 </Text>
 
-                {hasSubBudgets && (
-                    <Text style={{ fontSize: 11, color: colors.accent, marginTop: 4 }}>
-                        {subBudgets.length} sub-budget{subBudgets.length > 1 ? "s" : ""}
-                    </Text>
-                )}
             </View>
 
             {hasSubBudgets && (
