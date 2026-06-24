@@ -123,6 +123,8 @@ export default function BudgetsScreen() {
         headerLimit > 0
             ? Math.round((headerSpent / headerLimit) * 100)
             : 0;
+
+    const hasIncome = !currentParent || 'income' in currentParent;
     // const totalSpent = activeList.reduce((sum, b) => sum + b.spent, 0);
     // const totalLimit = activeList.reduce((sum, b) => sum + b.income, 0);
     // const overallPercentage = totalLimit > 0 ? Math.round((totalSpent / totalLimit) * 100) : 0;
@@ -242,7 +244,7 @@ export default function BudgetsScreen() {
                             flexDirection: "row",
                             justifyContent: "space-between",
                             alignItems: "flex-end",
-                            marginBottom: 14,
+                            marginBottom: hasIncome ? 14 : 0,
                         }}
                     >
                         <View>
@@ -268,52 +270,58 @@ export default function BudgetsScreen() {
                                 ₱{headerSpent.toLocaleString()}
                             </Text>
                         </View>
-                        <View style={{ alignItems: "flex-end" }}>
-                            <Text
+                        {hasIncome && (
+                            <View style={{ alignItems: "flex-end" }}>
+                                <Text
+                                    style={{
+                                        fontSize: 12,
+                                        color: "rgba(255,255,255,0.75)",
+                                        letterSpacing: 0.5,
+                                        textTransform: "uppercase",
+                                        marginBottom: 4,
+                                    }}
+                                >
+                                    Total Budget
+                                </Text>
+                                <Text
+                                    style={{
+                                        fontSize: 20,
+                                        fontWeight: "700",
+                                        color: "rgba(255,255,255,0.9)",
+                                    }}
+                                >
+                                    ₱{headerLimit.toLocaleString()}
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+  
+                    {hasIncome && (
+                        <>
+                            {/* Overall Progress Bar */}
+                            <View
                                 style={{
-                                    fontSize: 12,
-                                    color: "rgba(255,255,255,0.75)",
-                                    letterSpacing: 0.5,
-                                    textTransform: "uppercase",
-                                    marginBottom: 4,
+                                    height: 4,
+                                    backgroundColor: "rgba(255,255,255,0.25)",
+                                    borderRadius: 2,
+                                    overflow: "hidden",
+                                    marginBottom: 8,
                                 }}
                             >
-                                Total Budget
+                                <View
+                                    style={{
+                                        width: `${Math.min(headerPercentage, 100)}%`,
+                                        height: "100%",
+                                        backgroundColor: "#fff",
+                                        borderRadius: 2,
+                                    }}
+                                />
+                            </View>
+                            <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>
+                                {headerPercentage}% of budget used
                             </Text>
-                            <Text
-                                style={{
-                                    fontSize: 20,
-                                    fontWeight: "700",
-                                    color: "rgba(255,255,255,0.9)",
-                                }}
-                            >
-                                ₱{headerLimit.toLocaleString()}
-                            </Text>
-                        </View>
-                    </View>
- 
-                    {/* Overall Progress Bar */}
-                    <View
-                        style={{
-                            height: 4,
-                            backgroundColor: "rgba(255,255,255,0.25)",
-                            borderRadius: 2,
-                            overflow: "hidden",
-                            marginBottom: 8,
-                        }}
-                    >
-                        <View
-                            style={{
-                                width: `${Math.min(headerPercentage, 100)}%`,
-                                height: "100%",
-                                backgroundColor: "#fff",
-                                borderRadius: 2,
-                            }}
-                        />
-                    </View>
-                    <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>
-                        {headerPercentage}% of budget used
-                    </Text>
+                        </>
+                    )}
                 </View>
             </View>
 
