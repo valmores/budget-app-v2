@@ -1,5 +1,5 @@
-import { Feather } from '@expo/vector-icons';
 import { useTheme } from '@/context/ThemeContext';
+import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
@@ -191,14 +191,7 @@ export default function Login() {
     const [navLoading, setNavLoading] = useState(false);
 
     const handleLogin = async () => {
-        try {
-            if (Platform.OS !== 'web') {
-                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            }
-        } catch {
-            // ignore
-        }
-        router.replace('/dashboard');
+        router.replace('/dashboard/dashboard');
     };
     const handleGoRegister = async () => {
         setNavLoading(true);
