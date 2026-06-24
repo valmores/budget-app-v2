@@ -24,7 +24,7 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="dashboard"
+        name="dashboard/dashboard"
         options={{
           title: 'Dashboard',
           tabBarIcon: ({ color, size }) => (
@@ -34,7 +34,7 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="budgets_page"
+        name="budget-tab/budgets_page"
         options={{
           title: 'Budgets',
           tabBarIcon: ({ color, size }) => (
@@ -44,7 +44,7 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="analytics_page"
+        name="analytics/analytics_page"
         options={{
           title: 'Analytics',
           tabBarIcon: ({ color, size }) => (
@@ -54,7 +54,7 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="profile_page"
+        name="profile/profile_page"
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size }) => (

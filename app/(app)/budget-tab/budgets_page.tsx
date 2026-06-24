@@ -1,4 +1,4 @@
-import BudgetListCard from "@/components/budgetlist_card";
+import BudgetListCard from "@/app/(app)/budget-tab/components/budgetlist_card";
 import { useTheme } from "@/context/ThemeContext";
 import { BudgetNode, BudgetPeriod } from "@/types/budget";
 import { Feather, Ionicons } from "@expo/vector-icons";
