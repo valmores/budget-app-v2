@@ -24,15 +24,13 @@ export default function BudgetsScreen() {
                 {
                     id: 101,
                     title: "Groceries",
-                    spent: 500,
-
                     date: "Jun 30, 2026",
                     added_by: "Juan Dela Cruz",
                     subBudgets: [
                         {
                             id: 1011,
                             title: "Meat & Seafood",
-                            spent: 200,
+                            spent: 600,
                             date: "Jun 30, 2026",
                             added_by: "Juan Dela Cruz",
                             subBudgets: [],
@@ -112,13 +110,27 @@ export default function BudgetsScreen() {
         totalLimit > 0
             ? Math.round((totalSpent / totalLimit) * 100)
             : 0;
+
+    const headerSpent = currentParent
+        ? getTotalSpent(currentParent.subBudgets)
+        : totalSpent;
+
+    const headerLimit = currentParent
+        ? ('income' in currentParent ? currentParent.income : (currentParent.spent ?? 0))
+        : totalLimit;
+
+    const headerPercentage =
+        headerLimit > 0
+            ? Math.round((headerSpent / headerLimit) * 100)
+            : 0;
     // const totalSpent = activeList.reduce((sum, b) => sum + b.spent, 0);
     // const totalLimit = activeList.reduce((sum, b) => sum + b.income, 0);
     // const overallPercentage = totalLimit > 0 ? Math.round((totalSpent / totalLimit) * 100) : 0;
 
     function getTotalSpent(nodes: any[]): number {
         return nodes.reduce((sum, node) => {
-            return sum + node.spent + getTotalSpent(node.subBudgets || []);
+            const hasSub = node.subBudgets && node.subBudgets.length > 0;
+            return sum + (hasSub ? getTotalSpent(node.subBudgets) : (node.spent ?? 0));
         }, 0);
     }
 
@@ -253,7 +265,7 @@ export default function BudgetsScreen() {
                                     letterSpacing: -0.5,
                                 }}
                             >
-                                ₱{totalSpent.toLocaleString()}
+                                ₱{headerSpent.toLocaleString()}
                             </Text>
                         </View>
                         <View style={{ alignItems: "flex-end" }}>
@@ -275,11 +287,11 @@ export default function BudgetsScreen() {
                                     color: "rgba(255,255,255,0.9)",
                                 }}
                             >
-                                ₱{totalLimit.toLocaleString()}
+                                ₱{headerLimit.toLocaleString()}
                             </Text>
                         </View>
                     </View>
-
+ 
                     {/* Overall Progress Bar */}
                     <View
                         style={{
@@ -292,7 +304,7 @@ export default function BudgetsScreen() {
                     >
                         <View
                             style={{
-                                width: `${overallPercentage}%`,
+                                width: `${Math.min(headerPercentage, 100)}%`,
                                 height: "100%",
                                 backgroundColor: "#fff",
                                 borderRadius: 2,
@@ -300,7 +312,7 @@ export default function BudgetsScreen() {
                         />
                     </View>
                     <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>
-                        {overallPercentage}% of total budget used
+                        {headerPercentage}% of budget used
                     </Text>
                 </View>
             </View>
@@ -331,7 +343,7 @@ export default function BudgetsScreen() {
                     <BudgetListCard
                         key={budget.id}
                         title={budget.title}
-                        spent={getTotalSpent(budget.subBudgets)}
+                        spent={'spent' in budget ? (budget as BudgetNode).spent : 0}
                         date={budget.date}
                         added_by={budget.added_by}
                         subBudgets={budget.subBudgets ?? []}

@@ -6,13 +6,20 @@ import { Text, TouchableOpacity, View } from "react-native";
 
 type BudgetListCardProps = {
     title: string;
-    spent: number;
+    spent?: number;
     date: string;
     added_by: string;
     subBudgets?: BudgetNode[];
     onPress?: () => void;
     showPercentage?: boolean;
     income?: number;
+};
+
+const calculateTotalSpent = (nodes: BudgetNode[]): number => {
+    return nodes.reduce((sum, node) => {
+        const hasSub = node.subBudgets && node.subBudgets.length > 0;
+        return sum + (hasSub ? calculateTotalSpent(node.subBudgets) : (node.spent ?? 0));
+    }, 0);
 };
 
 export default function BudgetListCard({
@@ -29,9 +36,11 @@ export default function BudgetListCard({
 
     const hasSubBudgets = subBudgets.length > 0;
 
+    const displaySpent = (hasSubBudgets ? calculateTotalSpent(subBudgets) : spent) ?? 0;
+
     const percentage =
         showPercentage && income
-            ? Math.min((spent / income) * 100, 100)
+            ? Math.min((displaySpent / income) * 100, 100)
             : null;
 
     const progressColor =
@@ -68,7 +77,7 @@ export default function BudgetListCard({
                                 {Math.round(percentage)}% spent
                             </Text>
                             <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-                                ₱{spent.toLocaleString()} of ₱{income?.toLocaleString()}
+                                ₱{displaySpent.toLocaleString()} of ₱{income?.toLocaleString()}
                             </Text>
                         </View>
                         <View
@@ -90,7 +99,15 @@ export default function BudgetListCard({
                         </View>
                     </View>
                 )}
-
+                {hasSubBudgets ?
+                    <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+                        Total Spent: ₱{displaySpent.toLocaleString()}
+                    </Text>
+                    :
+                    <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+                        Spent: ₱{displaySpent.toLocaleString()}
+                    </Text>
+                }
                 <Text style={{ fontSize: 12, color: colors.textSecondary }}>
                     Added by: {added_by}
                 </Text>
