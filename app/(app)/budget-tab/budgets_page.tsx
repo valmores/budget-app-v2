@@ -1,12 +1,12 @@
-import BudgetListCard from "@/app/(app)/budget-tab/components/budgetlist_card";
+import AddDrawer from "@/components/budget-tab/addDrawer";
+import BudgetListCard from "@/components/budget-tab/budgetListCard";
+import SummaryCard from "@/components/budget-tab/summaryCard";
 import { useTheme } from "@/context/ThemeContext";
 import { BudgetNode, BudgetPeriod } from "@/types/budget";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AddDrawer from "./components/add_drawer";
-import SummaryCard from "./components/summary_card";
 
 export default function BudgetsScreen() {
     const { colors } = useTheme();
