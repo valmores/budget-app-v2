@@ -1,5 +1,6 @@
 import AddDrawer from "@/components/budget-tab/addDrawer";
 import BudgetListCard from "@/components/budget-tab/budgetListCard";
+import EditDrawer from "@/components/budget-tab/EditDrawer";
 import SummaryCard from "@/components/budget-tab/summaryCard";
 import { useTheme } from "@/context/ThemeContext";
 import { BudgetNode, BudgetPeriod } from "@/types/budget";
@@ -12,8 +13,9 @@ export default function BudgetsScreen() {
     const { colors } = useTheme();
     const [navStack, setNavStack] = useState<(BudgetNode | BudgetPeriod)[]>([]);
     const [showAddDrawer, setShowAddDrawer] = useState(false);
+    const [editTarget, setEditTarget] = useState<BudgetNode | BudgetPeriod | null>(null);
 
-    const budgets: BudgetPeriod[] = [
+    const [budgets, setBudgets] = useState<BudgetPeriod[]>([
         {
             id: 1,
             title: "June 15 - June 30, 2026",
@@ -87,7 +89,7 @@ export default function BudgetsScreen() {
             added_by: "James Bryan Valmores",
             subBudgets: [],
         },
-    ];
+    ]);
 
     const currentParent = navStack?.length > 0 ? navStack[navStack?.length - 1] : null;
     const activeList = currentParent
@@ -133,6 +135,68 @@ export default function BudgetsScreen() {
 
     const handleBack = () => {
         setNavStack((prev) => prev.slice(0, -1));
+    };
+
+    // Recursively update a node by id in a tree
+    const updateNodeById = (
+        nodes: BudgetNode[],
+        id: number,
+        updates: Partial<BudgetNode>
+    ): BudgetNode[] =>
+        nodes.map((n) =>
+            n.id === id
+                ? { ...n, ...updates }
+                : { ...n, subBudgets: updateNodeById(n.subBudgets, id, updates) }
+        );
+
+    // Recursively delete a node by id from a tree
+    const deleteNodeById = (nodes: BudgetNode[], id: number): BudgetNode[] =>
+        nodes
+            .filter((n) => n.id !== id)
+            .map((n) => ({ ...n, subBudgets: deleteNodeById(n.subBudgets, id) }));
+
+    const handleEdit = (budget: BudgetNode | BudgetPeriod) => {
+        setEditTarget(budget);
+    };
+
+    const handleSaveEdit = (updated: Partial<BudgetNode & BudgetPeriod>) => {
+        if (!editTarget) return;
+        setBudgets((prev) =>
+            prev.map((period) => {
+                if (period.id === editTarget.id) {
+                    // Top-level BudgetPeriod
+                    return { ...period, ...updated };
+                }
+                // Nested BudgetNode
+                return {
+                    ...period,
+                    subBudgets: updateNodeById(period.subBudgets, editTarget.id, updated as Partial<BudgetNode>),
+                };
+            })
+        );
+        // Also update navStack entry if the edited item is in the stack
+        setNavStack((prev) =>
+            prev.map((item) =>
+                item.id === editTarget.id ? { ...item, ...updated } : item
+            )
+        );
+        setEditTarget(null);
+    };
+
+    const handleDelete = (budget: BudgetNode | BudgetPeriod) => {
+        setBudgets((prev) => {
+            // Check if it's a top-level period
+            if (prev.some((p) => p.id === budget.id)) {
+                return prev.filter((p) => p.id !== budget.id);
+            }
+            // Otherwise delete from sub-tree
+            return prev.map((period) => ({
+                ...period,
+                subBudgets: deleteNodeById(period.subBudgets, budget.id),
+            }));
+        });
+        // Pop from navStack if the deleted item was navigated into
+        setNavStack((prev) => prev.filter((item) => item.id !== budget.id));
     };
 
     // Label shown in the section header above the list
@@ -217,17 +281,7 @@ export default function BudgetsScreen() {
                     hasIncome={isRoot}
                 />
             </View>
-
-            {/* CONTENT */}
-            <ScrollView
-                style={{ flex: 1 }}
-                contentContainerStyle={{
-                    padding: 16,
-                    paddingTop: 20,
-                    paddingBottom: 100,
-                }}
-                showsVerticalScrollIndicator={false}
-            >
+            <View style={{ paddingHorizontal: 16, paddingVertical: 15 }}>
                 <Text
                     style={{
                         fontSize: 12,
@@ -235,11 +289,21 @@ export default function BudgetsScreen() {
                         color: colors.textMuted,
                         letterSpacing: 1,
                         textTransform: "uppercase",
-                        marginBottom: 12,
                     }}
                 >
                     {sectionLabel}
                 </Text>
+            </View>
+
+            {/* CONTENT */}
+            <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{
+                    paddingHorizontal: 16,
+                }}
+                showsVerticalScrollIndicator={false}
+            >
+
                 {activeList?.map((budget) => (
                     <BudgetListCard
                         key={budget.id}
@@ -251,6 +315,8 @@ export default function BudgetsScreen() {
                         showPercentage={isRoot}
                         income={'income' in budget ? (budget as BudgetPeriod).income : undefined}
                         onPress={() => handleDrillIn(budget)}
+                        onEdit={() => handleEdit(budget)}
+                        onDelete={() => handleDelete(budget)}
                     />
                 ))}
             </ScrollView>
@@ -283,6 +349,21 @@ export default function BudgetsScreen() {
                     currentParent={currentParent}
                     colors={colors}
                     setShowAddDrawer={setShowAddDrawer}
+                />
+            )}
+            {editTarget && (
+                <EditDrawer
+                    budget={editTarget}
+                    colors={{
+                        surface: colors.surface,
+                        textPrimary: colors.textPrimary,
+                        textSecondary: colors.textSecondary,
+                        accent: colors.accent,
+                        border: colors.border,
+                        warning: colors.warning,
+                    }}
+                    onClose={() => setEditTarget(null)}
+                    onSave={handleSaveEdit}
                 />
             )}
         </SafeAreaView>
