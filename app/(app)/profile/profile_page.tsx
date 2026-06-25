@@ -1,12 +1,14 @@
-import React from 'react';
-import { Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/context/ThemeContext';
 import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfilePage() {
     const { colors, isDark } = useTheme();
-
+    const router = useRouter();
     const menuItems = [
         { icon: 'user', label: 'Edit Profile' },
         { icon: 'bell', label: 'Notifications' },
@@ -60,7 +62,12 @@ export default function ProfilePage() {
             </View>
 
             {/* Menu List */}
-            <View style={{ paddingHorizontal: 16 }}>
+            <View
+                style={{
+                    flex: 1,
+                    paddingHorizontal: 16,
+                }}
+            >
                 <Text
                     style={{
                         fontSize: 12,
@@ -73,58 +80,73 @@ export default function ProfilePage() {
                 >
                     Settings
                 </Text>
-                {menuItems.map((item, index) => (
-                    <View
-                        key={index}
-                        style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: colors.surface,
-                            paddingHorizontal: 16,
-                            paddingVertical: 14,
-                            borderRadius: 14,
-                            marginBottom: 10,
-                            borderWidth: isDark ? 1 : 0,
-                            borderColor: isDark ? colors.border : 'transparent',
-                            elevation: isDark ? 0 : 1,
-                            shadowColor: colors.shadow,
-                            shadowOpacity: isDark ? 0 : 0.05,
-                            shadowRadius: 6,
-                            shadowOffset: { width: 0, height: 2 },
-                        }}
-                    >
-                        <View
-                            style={{
-                                width: 36,
-                                height: 36,
-                                borderRadius: 10,
-                                backgroundColor: item.label === 'Sign Out'
-                                    ? 'rgba(239,83,80,0.12)'
-                                    : colors.accentSubtle,
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                marginRight: 14,
+
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    style={{ marginBottom: 40 }}
+                >
+                    {menuItems.map((item, index) => (
+                        <Pressable
+                            key={index}
+                            onPress={() => {
+                                if (item.label === 'Sign Out') {
+                                    router.replace('/');
+                                }
                             }}
                         >
-                            <Feather
-                                name={item.icon}
-                                size={18}
-                                color={item.label === 'Sign Out' ? colors.error : colors.accent}
-                            />
-                        </View>
-                        <Text
-                            style={{
-                                flex: 1,
-                                fontSize: 15,
-                                fontWeight: '500',
-                                color: item.label === 'Sign Out' ? colors.error : colors.textPrimary,
-                            }}
-                        >
-                            {item.label}
-                        </Text>
-                        <Feather name="chevron-right" size={16} color={colors.textMuted} />
-                    </View>
-                ))}
+                            <View
+                                key={index}
+                                style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    backgroundColor: colors.surface,
+                                    paddingHorizontal: 16,
+                                    paddingVertical: 14,
+                                    borderRadius: 14,
+                                    marginBottom: 10,
+                                    borderWidth: isDark ? 1 : 0,
+                                    borderColor: isDark ? colors.border : 'transparent',
+                                    elevation: isDark ? 0 : 1,
+                                    shadowColor: colors.shadow,
+                                    shadowOpacity: isDark ? 0 : 0.05,
+                                    shadowRadius: 6,
+                                    shadowOffset: { width: 0, height: 2 },
+                                }}
+                            >
+                                <View
+                                    style={{
+                                        width: 36,
+                                        height: 36,
+                                        borderRadius: 10,
+                                        backgroundColor: item.label === 'Sign Out'
+                                            ? 'rgba(239,83,80,0.12)'
+                                            : colors.accentSubtle,
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        marginRight: 14,
+                                    }}
+                                >
+                                    <Feather
+                                        name={item.icon}
+                                        size={18}
+                                        color={item.label === 'Sign Out' ? colors.error : colors.accent}
+                                    />
+                                </View>
+                                <Text
+                                    style={{
+                                        flex: 1,
+                                        fontSize: 15,
+                                        fontWeight: '500',
+                                        color: item.label === 'Sign Out' ? colors.error : colors.textPrimary,
+                                    }}
+                                >
+                                    {item.label}
+                                </Text>
+                                <Feather name="chevron-right" size={16} color={colors.textMuted} />
+                            </View>
+                        </Pressable>
+                    ))}
+                </ScrollView>
             </View>
         </SafeAreaView>
     );
