@@ -2,7 +2,7 @@ import { useTheme } from "@/context/ThemeContext";
 import { BudgetNode } from "@/types/budget";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Platform, Text, TouchableOpacity, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
     runOnJS,
@@ -63,14 +63,18 @@ export default function BudgetListCard({
             ? Math.min((displaySpent / income) * 100, 100)
             : null;
 
-    const progressColor =
+    // Status: over budget, warning, healthy
+    const statusColor =
         percentage === null
-            ? colors.textSecondary
-            : percentage >= 80
-                ? colors.warning
-                : colors.accent;
+            ? colors.accent
+            : percentage >= 100
+                ? colors.error
+                : percentage >= 75
+                    ? colors.warning
+                    : colors.success;
 
-    const triggerEdit = () => onEdit?.();
+    const progressColor = statusColor;
+
     const triggerDeleteConfirm = () => setDeleteConfirmVisible(true);
 
     const panGesture = Gesture.Pan()
@@ -81,10 +85,8 @@ export default function BudgetListCard({
         })
         .onUpdate((e) => {
             const next = startX.value + e.translationX;
-            // Only allow swipe right if onEdit exists, left if onDelete exists
             if (next > 0 && !onEdit) return;
             if (next < 0 && !onDelete) return;
-            // Clamp with rubber-band effect past threshold
             const maxRight = ACTION_WIDTH + 20;
             const maxLeft = -(ACTION_WIDTH + 20);
             if (next > maxRight) {
@@ -97,13 +99,10 @@ export default function BudgetListCard({
         })
         .onEnd(() => {
             if (translateX.value > SWIPE_THRESHOLD && onEdit) {
-                // Snap to reveal edit
                 translateX.value = withSpring(ACTION_WIDTH, SPRING_CONFIG);
             } else if (translateX.value < -SWIPE_THRESHOLD && onDelete) {
-                // Snap to reveal delete
                 translateX.value = withSpring(-ACTION_WIDTH, SPRING_CONFIG);
             } else {
-                // Snap back
                 translateX.value = withSpring(0, SPRING_CONFIG);
             }
         });
@@ -116,7 +115,6 @@ export default function BudgetListCard({
         transform: [{ translateX: translateX.value }],
     }));
 
-    // Edit reveal opacity (left side, shown when swiping right)
     const editRevealStyle = useAnimatedStyle(() => {
         const progress = Math.min(translateX.value / ACTION_WIDTH, 1);
         return {
@@ -124,7 +122,6 @@ export default function BudgetListCard({
         };
     });
 
-    // Delete reveal opacity (right side, shown when swiping left)
     const deleteRevealStyle = useAnimatedStyle(() => {
         const progress = Math.min(-translateX.value / ACTION_WIDTH, 1);
         return {
@@ -142,10 +139,32 @@ export default function BudgetListCard({
         runOnJS(triggerDeleteConfirm)();
     };
 
+    // Initials avatar from title
+    const initials = title
+        .split(" ")
+        .slice(0, 2)
+        .map((w) => w[0]?.toUpperCase() ?? "")
+        .join("");
+
     return (
         <>
-            <View style={{ marginBottom: 12, overflow: "hidden", borderRadius: 16 }}>
-
+            <View
+                style={{
+                    marginBottom: 12,
+                    overflow: "hidden",
+                    borderRadius: 18,
+                    // Shadow
+                    ...Platform.select({
+                        ios: {
+                            shadowColor: colors.shadow,
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: isDark ? 0.4 : 0.08,
+                            shadowRadius: 8,
+                        },
+                        android: { elevation: isDark ? 4 : 2 },
+                    }),
+                }}
+            >
                 {/* EDIT background (left side, swipe right) */}
                 {onEdit && (
                     <TouchableOpacity
@@ -164,8 +183,8 @@ export default function BudgetListCard({
                                 {
                                     flex: 1,
                                     backgroundColor: colors.warning,
-                                    borderTopLeftRadius: 16,
-                                    borderBottomLeftRadius: 16,
+                                    borderTopLeftRadius: 18,
+                                    borderBottomLeftRadius: 18,
                                     justifyContent: "center",
                                     alignItems: "center",
                                     gap: 4,
@@ -199,8 +218,8 @@ export default function BudgetListCard({
                                 {
                                     flex: 1,
                                     backgroundColor: colors.error,
-                                    borderTopRightRadius: 16,
-                                    borderBottomRightRadius: 16,
+                                    borderTopRightRadius: 18,
+                                    borderBottomRightRadius: 18,
                                     justifyContent: "center",
                                     alignItems: "center",
                                     gap: 4,
@@ -220,38 +239,148 @@ export default function BudgetListCard({
                 <GestureDetector gesture={panGesture}>
                     <Animated.View style={cardStyle}>
                         <TouchableOpacity
-                            activeOpacity={hasSubBudgets ? 0.7 : 1}
+                            activeOpacity={hasSubBudgets ? 0.75 : 1}
                             onPress={hasSubBudgets ? onPress : undefined}
                             style={{
                                 backgroundColor: colors.surface,
-                                borderRadius: 16,
-                                padding: 18,
-                                flexDirection: "row",
-                                alignItems: "center",
+                                borderRadius: 18,
+                                borderWidth: 1,
+                                borderColor: colors.border,
+                                overflow: "hidden",
                             }}
                         >
-                            <View style={{ flex: 1 }}>
-                                {/* TITLE */}
-                                <Text style={{ fontSize: 15, fontWeight: "600", color: colors.textPrimary }}>
-                                    {title}
-                                </Text>
+                            {/* Top accent stripe */}
+                            <View
+                                style={{
+                                    height: 3,
+                                    opacity: 0.85,
+                                }}
+                            />
 
-                                {/* OPTIONAL PROGRESS BAR & PERCENT */}
-                                {percentage !== null && (
-                                    <View style={{ marginTop: 8, marginBottom: 8 }}>
-                                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                                            <Text style={{ fontSize: 13, fontWeight: "600", color: progressColor }}>
-                                                {Math.round(percentage)}% spent
-                                            </Text>
-                                            <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-                                                ₱{displaySpent.toLocaleString()} of ₱{income?.toLocaleString()}
-                                            </Text>
-                                        </View>
+                            <View style={{ padding: 16 }}>
+                                {/* ── Row 1: Avatar + Title + Chevron ── */}
+                                <View
+                                    style={{
+                                        flexDirection: "row",
+                                        alignItems: "center",
+                                        marginBottom: 14,
+                                    }}
+                                >
+                                    {/* Initials avatar */}
+
+
+                                    {/* Title + sub-label */}
+                                    <View style={{ flex: 1 }}>
+                                        <Text
+                                            style={{
+                                                fontSize: 16,
+                                                fontWeight: "700",
+                                                color: colors.textPrimary,
+                                                letterSpacing: -0.3,
+                                            }}
+                                            numberOfLines={1}
+                                        >
+                                            {title}
+                                        </Text>
+                                        <Text
+                                            style={{
+                                                fontSize: 11,
+                                                color: colors.textMuted,
+                                                marginTop: 2,
+                                                letterSpacing: 0.1,
+                                            }}
+                                        >
+                                            {hasSubBudgets
+                                                ? `${subBudgets.length} sub-budget${subBudgets.length !== 1 ? "s" : ""}`
+                                                : "Individual budget"}
+                                        </Text>
+                                    </View>
+
+                                    {/* Chevron for drilldown */}
+                                    {hasSubBudgets && (
                                         <View
                                             style={{
-                                                height: 6,
-                                                backgroundColor: isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.06)",
-                                                borderRadius: 3,
+                                                width: 28,
+                                                height: 28,
+                                                borderRadius: 8,
+                                                // backgroundColor: colors.accent + "15",
+                                                justifyContent: "center",
+                                                alignItems: "center",
+                                            }}
+                                        >
+                                            <Ionicons
+                                                name="chevron-forward"
+                                                size={15}
+                                                color={colors.accent}
+                                            />
+                                        </View>
+                                    )}
+                                </View>
+
+                                {/* ── Row 2: Spent amount (large) ── */}
+                                <View
+                                    style={{
+                                        flexDirection: "row",
+                                        alignItems: "baseline",
+                                        marginBottom: 12,
+                                        gap: 6,
+                                    }}
+                                >
+                                    <Text
+                                        style={{
+                                            fontSize: 26,
+                                            fontWeight: "800",
+                                            color: colors.textPrimary,
+                                            letterSpacing: -0.8,
+                                        }}
+                                    >
+                                        ₱{displaySpent.toLocaleString()}
+                                    </Text>
+                                    {income != null && (
+                                        <Text
+                                            style={{
+                                                fontSize: 13,
+                                                fontWeight: "500",
+                                                color: colors.textMuted,
+                                            }}
+                                        >
+                                            / ₱{income.toLocaleString()}
+                                        </Text>
+                                    )}
+                                    {/* Status badge */}
+                                    {percentage !== null && (
+                                        <View
+                                            style={{
+                                                marginLeft: "auto",
+                                                backgroundColor: statusColor + "20",
+                                                borderRadius: 20,
+                                                paddingHorizontal: 10,
+                                                paddingVertical: 3,
+                                            }}
+                                        >
+                                            <Text
+                                                style={{
+                                                    fontSize: 12,
+                                                    fontWeight: "700",
+                                                    color: statusColor,
+                                                }}
+                                            >
+                                                {Math.round(percentage)}%
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
+
+                                {/* ── Row 3: Progress bar ── */}
+                                {percentage !== null && (
+                                    <View style={{ marginBottom: 14 }}>
+                                        <View
+                                            style={{
+                                                height: 7,
+                                                backgroundColor: isDark
+                                                    ? "rgba(255,255,255,0.1)"
+                                                    : "rgba(0,0,0,0.06)",
+                                                borderRadius: 10,
                                                 overflow: "hidden",
                                             }}
                                         >
@@ -260,35 +389,113 @@ export default function BudgetListCard({
                                                     width: `${percentage}%`,
                                                     height: "100%",
                                                     backgroundColor: progressColor,
-                                                    borderRadius: 3,
+                                                    borderRadius: 10,
                                                 }}
                                             />
                                         </View>
                                     </View>
                                 )}
 
-                                {hasSubBudgets ? (
-                                    <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-                                        Total Spent: ₱{displaySpent.toLocaleString()}
-                                    </Text>
-                                ) : (
-                                    <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-                                        Spent: ₱{displaySpent.toLocaleString()}
-                                    </Text>
-                                )}
+                                {/* ── Row 4: Meta chips ── */}
+                                <View
+                                    style={{
+                                        flexDirection: "row",
+                                        flexWrap: "wrap",
+                                        gap: 6,
+                                    }}
+                                >
+                                    {/* Added by */}
+                                    <View
+                                        style={{
+                                            flexDirection: "row",
+                                            alignItems: "center",
+                                            gap: 4,
+                                            backgroundColor: isDark
+                                                ? "rgba(255,255,255,0.06)"
+                                                : "rgba(0,0,0,0.04)",
+                                            borderRadius: 20,
+                                            paddingHorizontal: 10,
+                                            paddingVertical: 4,
+                                        }}
+                                    >
+                                        <Ionicons
+                                            name="person-outline"
+                                            size={11}
+                                            color={colors.textMuted}
+                                        />
+                                        <Text
+                                            style={{
+                                                fontSize: 11,
+                                                color: colors.textSecondary,
+                                                fontWeight: "500",
+                                            }}
+                                        >
+                                            {added_by}
+                                        </Text>
+                                    </View>
 
-                                <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-                                    Added by: {added_by}
-                                </Text>
-                                <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-                                    Date: {date}
-                                </Text>
+                                    {/* Date */}
+                                    <View
+                                        style={{
+                                            flexDirection: "row",
+                                            alignItems: "center",
+                                            gap: 4,
+                                            backgroundColor: isDark
+                                                ? "rgba(255,255,255,0.06)"
+                                                : "rgba(0,0,0,0.04)",
+                                            borderRadius: 20,
+                                            paddingHorizontal: 10,
+                                            paddingVertical: 4,
+                                        }}
+                                    >
+                                        <Ionicons
+                                            name="calendar-outline"
+                                            size={11}
+                                            color={colors.textMuted}
+                                        />
+                                        <Text
+                                            style={{
+                                                fontSize: 11,
+                                                color: colors.textSecondary,
+                                                fontWeight: "500",
+                                            }}
+                                        >
+                                            {date}
+                                        </Text>
+                                    </View>
+
+                                    {/* Sub-budgets spent (leaf) */}
+                                    {!percentage && (
+                                        <View
+                                            style={{
+                                                flexDirection: "row",
+                                                alignItems: "center",
+                                                gap: 4,
+                                                backgroundColor: statusColor + "15",
+                                                borderRadius: 20,
+                                                paddingHorizontal: 10,
+                                                paddingVertical: 4,
+                                            }}
+                                        >
+                                            <Ionicons
+                                                name="wallet-outline"
+                                                size={11}
+                                                color={statusColor}
+                                            />
+                                            <Text
+                                                style={{
+                                                    fontSize: 11,
+                                                    color: statusColor,
+                                                    fontWeight: "600",
+                                                }}
+                                            >
+                                                {hasSubBudgets ? "Total" : "Spent"}:{" "}
+                                                ₱{displaySpent.toLocaleString()}
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
                             </View>
-
-                            {/* Right-side chevron */}
-                            {hasSubBudgets && (
-                                <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-                            )}
                         </TouchableOpacity>
                     </Animated.View>
                 </GestureDetector>
