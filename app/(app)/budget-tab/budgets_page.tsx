@@ -216,57 +216,7 @@ export default function BudgetsScreen() {
                     borderBottomColor: colors.border,
                 }}
             >
-                <View
-                    style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: 20,
-                    }}
-                >
-                    {navStack?.length > 0 ? (
-                        /* Drilled-in header: back button + breadcrumb title */
-                        <TouchableOpacity
-                            onPress={handleBack}
-                            style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
-                            activeOpacity={0.7}
-                        >
-                            <Ionicons name="chevron-back" size={22} color={colors.accent} />
-                            <View style={{ marginLeft: 4, flex: 1 }}>
-                                <Text
-                                    style={{
-                                        fontSize: 14,
-                                        fontWeight: "700",
-                                        color: colors.textSecondary,
-                                        letterSpacing: -0.3,
-                                    }}
-                                    numberOfLines={1}
-                                >
-                                    {(navStack || []).map((b, idx) => (
-                                        <Text key={b.id}>
-                                            {idx > 0 && <Text style={{ color: colors.accent }}>{' > '}</Text>}
-                                            <Text style={{ color: idx === navStack.length - 1 ? colors.textPrimary : colors.textSecondary }}>
-                                                {b.title}
-                                            </Text>
-                                        </Text>
-                                    ))}
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
-                    ) : (
-                        /* Root header */
-                        <Text
-                            style={{
-                                fontSize: 26,
-                                fontWeight: "700",
-                                color: colors.textPrimary,
-                                letterSpacing: -0.5,
-                            }}
-                        >
-                            Budgets
-                        </Text>
-                    )}
-                </View>
+
 
                 {/* Summary Card */}
                 <SummaryCard
@@ -281,18 +231,57 @@ export default function BudgetsScreen() {
                     hasIncome={isRoot}
                 />
             </View>
-            <View style={{ paddingHorizontal: 16, paddingVertical: 15 }}>
-                <Text
-                    style={{
-                        fontSize: 12,
-                        fontWeight: "600",
-                        color: colors.textMuted,
-                        letterSpacing: 1,
-                        textTransform: "uppercase",
-                    }}
-                >
-                    {sectionLabel}
-                </Text>
+            <View
+                style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingHorizontal: 16,
+                    paddingVertical: 15,
+                }}
+            >
+                {navStack?.length > 0 ? (
+                    /* Drilled-in header: back button + breadcrumb title */
+                    <TouchableOpacity
+                        onPress={handleBack}
+                        style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="chevron-back" size={22} color={colors.accent} />
+                        <View style={{ marginLeft: 4, flex: 1 }}>
+                            <Text
+                                style={{
+                                    fontSize: 14,
+                                    fontWeight: "700",
+                                    color: colors.textSecondary,
+                                    letterSpacing: -0.3,
+                                }}
+                                numberOfLines={1}
+                            >
+                                {(navStack || []).map((b, idx) => (
+                                    <Text key={b.id}>
+                                        {idx > 0 && <Text style={{ color: colors.accent }}>{' > '}</Text>}
+                                        <Text style={{ color: idx === navStack.length - 1 ? colors.textPrimary : colors.textSecondary }}>
+                                            {b.title}
+                                        </Text>
+                                    </Text>
+                                ))}
+                            </Text>
+                        </View>
+                    </TouchableOpacity>
+                ) : (
+                    /* Root label */
+                    <Text
+                        style={{
+                            fontSize: 12,
+                            fontWeight: "600",
+                            color: colors.textMuted,
+                            letterSpacing: 1,
+                            textTransform: "uppercase",
+                        }}
+                    >
+                        {sectionLabel}
+                    </Text>
+                )}
             </View>
 
             {/* CONTENT */}
