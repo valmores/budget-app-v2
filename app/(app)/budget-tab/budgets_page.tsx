@@ -5,10 +5,13 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AddDrawer from "./components/add_drawer";
+import SummaryCard from "./components/summary_card";
 
 export default function BudgetsScreen() {
     const { colors } = useTheme();
     const [navStack, setNavStack] = useState<(BudgetNode | BudgetPeriod)[]>([]);
+    const [showAddDrawer, setShowAddDrawer] = useState(false);
 
     const budgets: BudgetPeriod[] = [
         {
@@ -202,97 +205,17 @@ export default function BudgetsScreen() {
                 </View>
 
                 {/* Summary Card */}
-                <View
-                    style={{
-                        backgroundColor: colors.accent,
-                        borderRadius: 16,
-                        padding: 18,
-                    }}
-                >
-                    <View
-                        style={{
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            alignItems: "flex-end",
-                            marginBottom: hasIncome ? 14 : 0,
-                        }}
-                    >
-                        <View>
-                            <Text
-                                style={{
-                                    fontSize: 12,
-                                    color: "rgba(255,255,255,0.75)",
-                                    letterSpacing: 0.5,
-                                    textTransform: "uppercase",
-                                    marginBottom: 4,
-                                }}
-                            >
-                                Total Spent
-                            </Text>
-                            <Text
-                                style={{
-                                    fontSize: 28,
-                                    fontWeight: "800",
-                                    color: "#fff",
-                                    letterSpacing: -0.5,
-                                }}
-                            >
-                                ₱{headerSpent.toLocaleString()}
-                            </Text>
-                        </View>
-                        {hasIncome && (
-                            <View style={{ alignItems: "flex-end" }}>
-                                <Text
-                                    style={{
-                                        fontSize: 12,
-                                        color: "rgba(255,255,255,0.75)",
-                                        letterSpacing: 0.5,
-                                        textTransform: "uppercase",
-                                        marginBottom: 4,
-                                    }}
-                                >
-                                    Total Budget
-                                </Text>
-                                <Text
-                                    style={{
-                                        fontSize: 20,
-                                        fontWeight: "700",
-                                        color: "rgba(255,255,255,0.9)",
-                                    }}
-                                >
-                                    ₱{headerLimit.toLocaleString()}
-                                </Text>
-                            </View>
-                        )}
-                    </View>
-
-                    {hasIncome && (
-                        <>
-                            {/* Overall Progress Bar */}
-                            <View
-                                style={{
-                                    height: 4,
-                                    backgroundColor: "rgba(255,255,255,0.25)",
-                                    borderRadius: 2,
-                                    overflow: "hidden",
-                                    marginBottom: 8,
-                                }}
-                            >
-                                <View
-                                    style={{
-                                        width: `${Math.min(headerPercentage, 100)}%`,
-                                        height: "100%",
-                                        backgroundColor: "#fff",
-                                        borderRadius: 2,
-                                    }}
-                                />
-                            </View>
-                            <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>
-                                {headerPercentage}% of budget used
-                            </Text>
-                        </>
-                    )}
-                </View>
+                <SummaryCard
+                    title={currentParent ? currentParent.title : "Overall"}
+                    headerSpent={headerSpent}
+                    headerLimit={headerLimit}
+                    headerPercentage={headerPercentage}
+                    date={currentParent ? currentParent.date : "N/A"}
+                    added_by={currentParent ? currentParent.added_by : "N/A"}
+                    showPercentage={isRoot}
+                    income={isRoot ? totalLimit : undefined}
+                    hasIncome={isRoot}
+                />
             </View>
 
             {/* CONTENT */}
@@ -317,7 +240,7 @@ export default function BudgetsScreen() {
                 >
                     {sectionLabel}
                 </Text>
-                {activeList.map((budget) => (
+                {activeList?.map((budget) => (
                     <BudgetListCard
                         key={budget.id}
                         title={budget.title}
@@ -335,6 +258,7 @@ export default function BudgetsScreen() {
             {/* FLOATING ACTION BUTTON */}
             <TouchableOpacity
                 activeOpacity={0.85}
+                onPress={() => setShowAddDrawer(true)}
                 style={{
                     position: "absolute",
                     bottom: 28,
@@ -354,6 +278,13 @@ export default function BudgetsScreen() {
             >
                 <Feather name="plus" size={24} color="#fff" />
             </TouchableOpacity>
+            {showAddDrawer && (
+                <AddDrawer
+                    currentParent={currentParent}
+                    colors={colors}
+                    setShowAddDrawer={setShowAddDrawer}
+                />
+            )}
         </SafeAreaView>
     );
 }
