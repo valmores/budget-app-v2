@@ -465,37 +465,6 @@ export default function BudgetListCard({
                                             {date}
                                         </Text>
                                     </View>
-
-                                    {/* Sub-budgets spent (leaf) */}
-                                    {!percentage && (
-                                        <View
-                                            style={{
-                                                flexDirection: "row",
-                                                alignItems: "center",
-                                                gap: 4,
-                                                backgroundColor: statusColor + "15",
-                                                borderRadius: 20,
-                                                paddingHorizontal: 10,
-                                                paddingVertical: 4,
-                                            }}
-                                        >
-                                            <Ionicons
-                                                name="wallet-outline"
-                                                size={11}
-                                                color={statusColor}
-                                            />
-                                            <Text
-                                                style={{
-                                                    fontSize: 11,
-                                                    color: statusColor,
-                                                    fontWeight: "600",
-                                                }}
-                                            >
-                                                {hasSubBudgets ? "Total" : "Spent"}:{" "}
-                                                ₱{displaySpent.toLocaleString()}
-                                            </Text>
-                                        </View>
-                                    )}
                                 </View>
 
                                 {/* ── Add Sub-Budget button ── */}
