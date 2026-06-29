@@ -1,4 +1,5 @@
 import AddDrawer from "@/components/budget-tab/AddDrawer";
+import Breadcrumbs from "@/components/budget-tab/Breadcrumbs";
 import BudgetListCard from "@/components/budget-tab/BudgetListCard";
 import EditDrawer from "@/components/budget-tab/EditDrawer";
 import SummaryCard from "@/components/budget-tab/SummaryCard";
@@ -215,101 +216,12 @@ export default function BudgetsScreen() {
                     hasIncome={isRoot}
                 />
             </View>
-            {/* Bread Crumbs Section */}
-            <View
-                style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    paddingHorizontal: 16,
-                    paddingVertical: 10,
-                    gap: 8,
-                }}
-            >
-                {navStack?.length > 0 ? (
-                    <>
-                        {/* Back pill button */}
-                        <TouchableOpacity
-                            onPress={handleBack}
-                            activeOpacity={0.7}
-                            style={{
-                                flexDirection: "row",
-                                alignItems: "center",
-                                backgroundColor: colors.accent + "18",
-                                borderRadius: 20,
-                                paddingHorizontal: 10,
-                                paddingVertical: 5,
-                                gap: 2,
-                            }}
-                        >
-                            <Ionicons name="chevron-back" size={14} color={colors.accent} />
-                            <Text
-                                style={{
-                                    fontSize: 12,
-                                    fontWeight: "700",
-                                    color: colors.accent,
-                                    letterSpacing: 0.2,
-                                }}
-                            >
-                                Back
-                            </Text>
-                        </TouchableOpacity>
-
-                        {/* Breadcrumb trail */}
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={{
-                                flexDirection: "row",
-                                alignItems: "center",
-                                gap: 4,
-                            }}
-                            style={{ flex: 1 }}
-                        >
-                            {(navStack || []).map((b, idx) => (
-                                <View
-                                    key={b.id}
-                                    style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
-                                >
-                                    {idx > 0 && (
-                                        <Ionicons
-                                            name="chevron-forward"
-                                            size={11}
-                                            color={colors.textMuted}
-                                        />
-                                    )}
-                                    <Text
-                                        style={{
-                                            fontSize: 13,
-                                            fontWeight: idx === navStack.length - 1 ? "700" : "500",
-                                            color:
-                                                idx === navStack.length - 1
-                                                    ? colors.textPrimary
-                                                    : colors.textMuted,
-                                            letterSpacing: -0.2,
-                                        }}
-                                        numberOfLines={1}
-                                    >
-                                        {b.title}
-                                    </Text>
-                                </View>
-                            ))}
-                        </ScrollView>
-                    </>
-                ) : (
-                    /* Root label */
-                    <Text
-                        style={{
-                            fontSize: 12,
-                            fontWeight: "600",
-                            color: colors.textMuted,
-                            letterSpacing: 1,
-                            textTransform: "uppercase",
-                        }}
-                    >
-                        {sectionLabel}
-                    </Text>
-                )}
-            </View>
+            {/* Breadcrumbs Section */}
+            <Breadcrumbs
+                navStack={navStack}
+                onBack={handleBack}
+                sectionLabel={sectionLabel}
+            />
 
             {/* CONTENT */}
             <ScrollView
