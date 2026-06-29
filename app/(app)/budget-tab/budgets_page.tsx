@@ -9,8 +9,8 @@ import { useBudgets } from "@/hooks/useBudgets";
 import { BudgetNode, BudgetPeriod } from "@/types/budget";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { Timestamp } from "firebase/firestore";
-import { useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import { BackHandler, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function BudgetsScreen() {
@@ -87,6 +87,22 @@ export default function BudgetsScreen() {
     const handleBack = () => {
         setNavStack((prev) => prev.slice(0, -1));
     };
+
+    // Intercept the Android hardware/gesture back button:
+    // When inside a sub-budget view, pop the nav stack instead of leaving the tab.
+    useEffect(() => {
+        const subscription = BackHandler.addEventListener(
+            "hardwareBackPress",
+            () => {
+                if (navStack.length > 0) {
+                    handleBack();
+                    return true; // event consumed — do NOT navigate away
+                }
+                return false; // at root — let OS handle it normally
+            }
+        );
+        return () => subscription.remove();
+    }, [navStack.length]);
 
     const handleEdit = (budget: BudgetNode | BudgetPeriod) => {
         setEditTarget(budget);
