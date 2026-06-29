@@ -1,12 +1,14 @@
-import AddDrawer from "@/components/budget-tab/addDrawer";
-import BudgetListCard from "@/components/budget-tab/budgetListCard";
+import AddDrawer from "@/components/budget-tab/AddDrawer";
+import BudgetListCard from "@/components/budget-tab/BudgetListCard";
 import EditDrawer from "@/components/budget-tab/EditDrawer";
-import SummaryCard from "@/components/budget-tab/summaryCard";
+import SummaryCard from "@/components/budget-tab/SummaryCard";
 import { useTheme } from "@/context/ThemeContext";
+import { useBudgets } from "@/hooks/useBudgets";
 import { BudgetNode, BudgetPeriod } from "@/types/budget";
 import { Feather, Ionicons } from "@expo/vector-icons";
+import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function BudgetsScreen() {
@@ -15,87 +17,38 @@ export default function BudgetsScreen() {
     const [showAddDrawer, setShowAddDrawer] = useState(false);
     const [editTarget, setEditTarget] = useState<BudgetNode | BudgetPeriod | null>(null);
 
-    const [budgets, setBudgets] = useState<BudgetPeriod[]>([
-        {
-            id: 1,
-            title: "June 15 - June 30, 2026",
-            income: 10000,
-            date: "Jul 15, 2026",
-            added_by: "Juan Dela Cruz",
-            subBudgets: [
-                {
-                    id: 101,
-                    title: "Groceries",
-                    date: "Jun 30, 2026",
-                    added_by: "Juan Dela Cruz",
-                    subBudgets: [
-                        {
-                            id: 1011,
-                            title: "Meat & Seafood",
-                            spent: 600,
-                            date: "Jun 30, 2026",
-                            added_by: "Juan Dela Cruz",
-                            subBudgets: [],
-                        },
-                        {
-                            id: 1012,
-                            title: "Fruits & Vegetables",
-                            spent: 180,
-                            date: "Jun 30, 2026",
-                            added_by: "Juan Dela Cruz",
-                            subBudgets: [],
-                        },
-                        {
-                            id: 1013,
-                            title: "Pantry & Condiments",
-                            spent: 120,
-                            date: "Jun 30, 2026",
-                            added_by: "Juan Dela Cruz",
-                            subBudgets: [],
-                        },
-                    ],
-                },
-                {
-                    id: 102,
-                    title: "Transportation",
-                    spent: 300,
-                    date: "Jun 30, 2026",
-                    added_by: "Juan Dela Cruz",
-                    subBudgets: [],
-                },
-            ],
-        },
-        {
-            id: 2,
-            title: "July 1 - July 15, 2026",
-            income: 15000,
-            date: "Jul 23, 2026",
-            added_by: "Juan Dela Cruz",
-            subBudgets: [],
-        },
-        {
-            id: 3,
-            title: "July 15 - July 30, 2026",
-            income: 20000,
-            date: "Jul 20, 2026",
-            added_by: "James Bryan Valmores",
-            subBudgets: [],
-        },
-        {
-            id: 4,
-            title: "August 1 - August 15, 2026",
-            income: 13000,
-            date: "Jul 10, 2026",
-            added_by: "James Bryan Valmores",
-            subBudgets: [],
-        },
-    ]);
+    const { budgets, loading, error, addBudgetPeriod, addBudgetNode, updateBudget, deleteBudget } =
+        useBudgets();
 
-    const currentParent = navStack?.length > 0 ? navStack[navStack?.length - 1] : null;
-    const activeList = currentParent
-        ? currentParent.subBudgets
-        : budgets;
-    const isRoot = currentParent === null;
+    // The navStack holds snapshot objects — stale after Firestore updates.
+    // We only keep IDs from the stack and look up the live node from the
+    // Firestore-synced `budgets` tree so that newly added children appear
+    // immediately without needing to navigate away and back.
+    const currentParentId = navStack.length > 0 ? navStack[navStack.length - 1].id : null;
+
+    function findLiveNode(
+        nodes: (BudgetNode | BudgetPeriod)[],
+        id: string
+    ): BudgetNode | BudgetPeriod | null {
+        for (const node of nodes) {
+            if (node.id === id) return node;
+            const found = findLiveNode(node.subBudgets ?? [], id);
+            if (found) return found;
+        }
+        return null;
+    }
+
+    // Live reference — always fresh from Firestore
+    const liveCurrentParent = currentParentId
+        ? findLiveNode(budgets, currentParentId)
+        : null;
+
+    // Keep currentParent alias for handlers that still reference it
+    const currentParent = navStack.length > 0 ? navStack[navStack.length - 1] : null;
+
+    const activeList = liveCurrentParent ? liveCurrentParent.subBudgets : budgets;
+    const isRoot = currentParentId === null;
+
     const totalSpent = budgets.reduce(
         (sum, b) => sum + getTotalSpent(b.subBudgets),
         0
@@ -106,13 +59,13 @@ export default function BudgetsScreen() {
         0
     );
 
-
-    const headerSpent = currentParent
-        ? getTotalSpent(currentParent.subBudgets)
+    // Use live node for header so totals update immediately too
+    const headerSpent = liveCurrentParent
+        ? getTotalSpent(liveCurrentParent.subBudgets ?? [])
         : totalSpent;
 
-    const headerLimit = currentParent
-        ? ('income' in currentParent ? currentParent.income : (currentParent.spent ?? 0))
+    const headerLimit = liveCurrentParent
+        ? ('income' in liveCurrentParent ? liveCurrentParent.income : (liveCurrentParent.spent ?? 0))
         : totalLimit;
 
     const headerPercentage =
@@ -120,7 +73,7 @@ export default function BudgetsScreen() {
             ? Math.round((headerSpent / headerLimit) * 100)
             : 0;
 
-    const hasIncome = !currentParent || 'income' in currentParent;
+    const hasIncome = !liveCurrentParent || 'income' in liveCurrentParent;
 
     function getTotalSpent(nodes: any[]): number {
         return nodes.reduce((sum, node) => {
@@ -137,43 +90,23 @@ export default function BudgetsScreen() {
         setNavStack((prev) => prev.slice(0, -1));
     };
 
-    // Recursively update a node by id in a tree
-    const updateNodeById = (
-        nodes: BudgetNode[],
-        id: number,
-        updates: Partial<BudgetNode>
-    ): BudgetNode[] =>
-        nodes.map((n) =>
-            n.id === id
-                ? { ...n, ...updates }
-                : { ...n, subBudgets: updateNodeById(n.subBudgets, id, updates) }
-        );
-
-    // Recursively delete a node by id from a tree
-    const deleteNodeById = (nodes: BudgetNode[], id: number): BudgetNode[] =>
-        nodes
-            .filter((n) => n.id !== id)
-            .map((n) => ({ ...n, subBudgets: deleteNodeById(n.subBudgets, id) }));
-
     const handleEdit = (budget: BudgetNode | BudgetPeriod) => {
         setEditTarget(budget);
     };
 
-    const handleSaveEdit = (updated: Partial<BudgetNode & BudgetPeriod>) => {
+    const handleSaveEdit = async (updated: Partial<BudgetNode & BudgetPeriod>) => {
         if (!editTarget) return;
-        setBudgets((prev) =>
-            prev.map((period) => {
-                if (period.id === editTarget.id) {
-                    // Top-level BudgetPeriod
-                    return { ...period, ...updated };
-                }
-                // Nested BudgetNode
-                return {
-                    ...period,
-                    subBudgets: updateNodeById(period.subBudgets, editTarget.id, updated as Partial<BudgetNode>),
-                };
-            })
-        );
+
+        const isPeriod = 'income' in editTarget;
+
+        // Build Firestore-safe update payload
+        const firestoreUpdates: Record<string, any> = {};
+        if (updated.title !== undefined) firestoreUpdates.title = updated.title;
+        if (isPeriod && updated.income !== undefined) firestoreUpdates.income = updated.income;
+        if (!isPeriod && updated.spent !== undefined) firestoreUpdates.spent = updated.spent;
+
+        await updateBudget(editTarget.id, firestoreUpdates, isPeriod);
+
         // Also update navStack entry if the edited item is in the stack
         setNavStack((prev) =>
             prev.map((item) =>
@@ -183,24 +116,76 @@ export default function BudgetsScreen() {
         setEditTarget(null);
     };
 
-    const handleDelete = (budget: BudgetNode | BudgetPeriod) => {
-        setBudgets((prev) => {
-            // Check if it's a top-level period
-            if (prev.some((p) => p.id === budget.id)) {
-                return prev.filter((p) => p.id !== budget.id);
-            }
-            // Otherwise delete from sub-tree
-            return prev.map((period) => ({
-                ...period,
-                subBudgets: deleteNodeById(period.subBudgets, budget.id),
-            }));
-        });
+    const handleDelete = async (budget: BudgetNode | BudgetPeriod) => {
+        const isPeriod = 'income' in budget;
+        await deleteBudget(budget.id, isPeriod);
         // Pop from navStack if the deleted item was navigated into
         setNavStack((prev) => prev.filter((item) => item.id !== budget.id));
     };
 
+    const handleAddSubBudget = (budget: BudgetNode | BudgetPeriod) => {
+        // Drill into this card's context so AddDrawer creates a child of it
+        setNavStack((prev) => [...prev, budget]);
+        setShowAddDrawer(true);
+    };
+
+    const handleAdd = async (data: {
+        title: string;
+        amount: number;
+        added_by: string;
+        date: Timestamp;
+    }) => {
+        if (!currentParent) {
+            // Root level → add a BudgetPeriod
+            await addBudgetPeriod({
+                title: data.title,
+                income: data.amount,
+                date: data.date,
+                added_by: data.added_by,
+            });
+        } else {
+            // Inside a period or node → add a BudgetNode
+            const periodId =
+                'income' in currentParent
+                    ? currentParent.id
+                    : (currentParent as BudgetNode).periodId;
+            const parentId =
+                'income' in currentParent ? null : currentParent.id;
+
+            await addBudgetNode(
+                {
+                    title: data.title,
+                    spent: data.amount,
+                    date: data.date,
+                    added_by: data.added_by,
+                },
+                parentId,
+                periodId
+            );
+        }
+    };
+
     // Label shown in the section header above the list
     const sectionLabel = navStack?.length === 0 ? "All Budgets" : "Sub-Budgets";
+
+    if (loading) {
+        return (
+            <SafeAreaView style={{ flex: 1, backgroundColor: colors.background, justifyContent: "center", alignItems: "center" }} edges={["top"]}>
+                <ActivityIndicator size="large" color={colors.accent} />
+                <Text style={{ color: colors.textMuted, marginTop: 12, fontSize: 14 }}>Loading budgets…</Text>
+            </SafeAreaView>
+        );
+    }
+
+    if (error) {
+        return (
+            <SafeAreaView style={{ flex: 1, backgroundColor: colors.background, justifyContent: "center", alignItems: "center", paddingHorizontal: 32 }} edges={["top"]}>
+                <Ionicons name="cloud-offline-outline" size={48} color={colors.error} />
+                <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: "700", marginTop: 16, textAlign: "center" }}>Failed to load</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 8, textAlign: "center" }}>{error}</Text>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top"]}>
@@ -217,15 +202,14 @@ export default function BudgetsScreen() {
                 }}
             >
 
-
                 {/* Summary Card */}
                 <SummaryCard
-                    title={currentParent ? currentParent.title : "Overall"}
+                    title={liveCurrentParent ? liveCurrentParent.title : "Overall"}
                     headerSpent={headerSpent}
                     headerLimit={headerLimit}
                     headerPercentage={headerPercentage}
-                    date={currentParent ? currentParent.date : "N/A"}
-                    added_by={currentParent ? currentParent.added_by : "N/A"}
+                    date={liveCurrentParent ? liveCurrentParent.date : "N/A"}
+                    added_by={liveCurrentParent ? liveCurrentParent.added_by : "N/A"}
                     showPercentage={isRoot}
                     income={isRoot ? totalLimit : undefined}
                     hasIncome={isRoot}
@@ -349,6 +333,7 @@ export default function BudgetsScreen() {
                         onPress={() => handleDrillIn(budget)}
                         onEdit={() => handleEdit(budget)}
                         onDelete={() => handleDelete(budget)}
+                        onAddSubBudget={() => handleAddSubBudget(budget)}
                     />
                 ))}
             </ScrollView>
@@ -381,6 +366,7 @@ export default function BudgetsScreen() {
                     currentParent={currentParent}
                     colors={colors}
                     setShowAddDrawer={setShowAddDrawer}
+                    onSave={handleAdd}
                 />
             )}
             {editTarget && (

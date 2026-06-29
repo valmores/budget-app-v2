@@ -24,6 +24,7 @@ type BudgetListCardProps = {
     income?: number;
     onEdit?: () => void;
     onDelete?: () => void;
+    onAddSubBudget?: () => void;
 };
 
 const calculateTotalSpent = (nodes: BudgetNode[]): number => {
@@ -48,6 +49,7 @@ export default function BudgetListCard({
     income,
     onEdit,
     onDelete,
+    onAddSubBudget,
 }: BudgetListCardProps) {
     const { colors, isDark } = useTheme();
     const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
@@ -495,6 +497,43 @@ export default function BudgetListCard({
                                         </View>
                                     )}
                                 </View>
+
+                                {/* ── Add Sub-Budget button ── */}
+                                {onAddSubBudget && (
+                                    <TouchableOpacity
+                                        activeOpacity={0.75}
+                                        onPress={onAddSubBudget}
+                                        style={{
+                                            flexDirection: "row",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            gap: 5,
+                                            marginTop: 12,
+                                            paddingVertical: 8,
+                                            borderRadius: 12,
+                                            borderWidth: 1.5,
+                                            borderColor: colors.accent + "55",
+                                            borderStyle: "dashed",
+                                            backgroundColor: colors.accent + "08",
+                                        }}
+                                    >
+                                        <Ionicons
+                                            name="add-circle-outline"
+                                            size={14}
+                                            color={colors.accent}
+                                        />
+                                        <Text
+                                            style={{
+                                                fontSize: 12,
+                                                fontWeight: "600",
+                                                color: colors.accent,
+                                                letterSpacing: 0.2,
+                                            }}
+                                        >
+                                            Add Sub-Budget
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
                             </View>
                         </TouchableOpacity>
                     </Animated.View>
