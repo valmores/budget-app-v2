@@ -1,6 +1,7 @@
 import AddDrawer from "@/components/budget-tab/AddDrawer";
 import Breadcrumbs from "@/components/budget-tab/Breadcrumbs";
 import BudgetListCard from "@/components/budget-tab/BudgetListCard";
+import BudgetSkeleton from "@/components/budget-tab/BudgetSkeleton";
 import EditDrawer from "@/components/budget-tab/EditDrawer";
 import SummaryCard from "@/components/budget-tab/SummaryCard";
 import { useTheme } from "@/context/ThemeContext";
@@ -9,7 +10,7 @@ import { BudgetNode, BudgetPeriod } from "@/types/budget";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function BudgetsScreen() {
@@ -21,10 +22,6 @@ export default function BudgetsScreen() {
     const { budgets, loading, error, addBudgetPeriod, addBudgetNode, updateBudget, deleteBudget } =
         useBudgets();
 
-    // The navStack holds snapshot objects — stale after Firestore updates.
-    // We only keep IDs from the stack and look up the live node from the
-    // Firestore-synced `budgets` tree so that newly added children appear
-    // immediately without needing to navigate away and back.
     const currentParentId = navStack.length > 0 ? navStack[navStack.length - 1].id : null;
 
     function findLiveNode(
@@ -170,12 +167,7 @@ export default function BudgetsScreen() {
     const sectionLabel = navStack?.length === 0 ? "All Budgets" : "Sub-Budgets";
 
     if (loading) {
-        return (
-            <SafeAreaView style={{ flex: 1, backgroundColor: colors.background, justifyContent: "center", alignItems: "center" }} edges={["top"]}>
-                <ActivityIndicator size="large" color={colors.accent} />
-                <Text style={{ color: colors.textMuted, marginTop: 12, fontSize: 14 }}>Loading budgets…</Text>
-            </SafeAreaView>
-        );
+        return <BudgetSkeleton />;
     }
 
     if (error) {
