@@ -188,7 +188,7 @@ export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-    const [navLoading, setNavLoading] = useState(false);
+    const [, setNavLoading] = useState(false);
 
     const handleLogin = async () => {
         router.replace('/dashboard/dashboard');

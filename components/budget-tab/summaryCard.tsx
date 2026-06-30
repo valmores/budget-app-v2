@@ -19,27 +19,27 @@ type BudgetListCardProps = {
 };
 
 export default function SummaryCard({ title, spent, date, added_by, subBudgets = [], onPress, showPercentage = false, income, hasIncome, headerSpent, headerLimit, headerPercentage }: BudgetListCardProps) {
-    const { colors, isDark } = useTheme();
-    const hasSubBudgets = subBudgets.length > 0;
-    const calculateTotalSpent = (nodes: BudgetNode[]): number => {
-        return nodes.reduce((sum, node) => {
-            const hasSub = node.subBudgets && node.subBudgets.length > 0;
-            return sum + (hasSub ? calculateTotalSpent(node.subBudgets) : (node.spent ?? 0));
-        }, 0);
-    };
-    const displaySpent = (hasSubBudgets ? calculateTotalSpent(subBudgets) : spent) ?? 0;
+    const { colors } = useTheme();
+    // const hasSubBudgets = subBudgets.length > 0;
+    // const calculateTotalSpent = (nodes: BudgetNode[]): number => {
+    //     return nodes.reduce((sum, node) => {
+    //         const hasSub = node.subBudgets && node.subBudgets.length > 0;
+    //         return sum + (hasSub ? calculateTotalSpent(node.subBudgets) : (node.spent ?? 0));
+    //     }, 0);
+    // };
+    // const displaySpent = (hasSubBudgets ? calculateTotalSpent(subBudgets) : spent) ?? 0;
 
-    const percentage =
-        showPercentage && income
-            ? Math.min((displaySpent / income) * 100, 100)
-            : null;
+    // const percentage =
+    //     showPercentage && income
+    //         ? Math.min((displaySpent / income) * 100, 100)
+    //         : null;
 
-    const progressColor =
-        percentage === null
-            ? colors.textSecondary
-            : percentage >= 80
-                ? colors.warning
-                : colors.accent;
+    // const progressColor =
+    //     percentage === null
+    //         ? colors.textSecondary
+    //         : percentage >= 80
+    //             ? colors.warning
+    //             : colors.accent;
     return (
         <View
             style={{

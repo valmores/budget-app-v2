@@ -142,11 +142,11 @@ export default function BudgetListCard({
     };
 
     // Initials avatar from title
-    const initials = title
-        .split(" ")
-        .slice(0, 2)
-        .map((w) => w[0]?.toUpperCase() ?? "")
-        .join("");
+    // const initials = title
+    //     .split(" ")
+    //     .slice(0, 2)
+    //     .map((w) => w[0]?.toUpperCase() ?? "")
+    //     .join("");
 
     return (
         <>

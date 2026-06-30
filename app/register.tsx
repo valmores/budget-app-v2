@@ -238,7 +238,7 @@ export default function Register() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
-    const [navLoading, setNavLoading] = useState(false);
+    const [, setNavLoading] = useState(false);
 
     const handleRegister = async () => {
         router.replace('/dashboard/dashboard');

@@ -71,7 +71,7 @@ export default function BudgetsScreen() {
             ? Math.round((headerSpent / headerLimit) * 100)
             : 0;
 
-    const hasIncome = !liveCurrentParent || 'income' in liveCurrentParent;
+    // const hasIncome = !liveCurrentParent || 'income' in liveCurrentParent;
 
     function getTotalSpent(nodes: any[]): number {
         return nodes.reduce((sum, node) => {

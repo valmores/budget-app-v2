@@ -55,7 +55,7 @@ export default function ConfirmDeleteModal({ title, onDelete, deleteConfirmVisib
                         Delete Budget?
                     </Text>
                     <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: "center", marginBottom: 24, lineHeight: 20 }}>
-                        Are you sure you want to delete "{title}"? This action cannot be undone.
+                        {`Are you sure you want to delete "${title}"? This action cannot be undone.`}
                     </Text>
 
                     <View style={{ flexDirection: "row", gap: 12 }}>
