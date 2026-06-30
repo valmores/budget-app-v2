@@ -1,11 +1,14 @@
 import EmailInputRow from '@/components/auth/EmailInputRow';
 import PasswordInputRow from '@/components/auth/PasswordInputRow';
+import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import { mapFirebaseError } from '@/lib/authErrors';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
+    ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -19,13 +22,30 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function Login() {
     const router = useRouter();
     const { colors, isDark } = useTheme();
+    const { signIn } = useAuth();
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [, setNavLoading] = useState(false);
 
     const handleLogin = async () => {
-        router.replace('/dashboard/dashboard');
+        if (!email.trim() || !password) {
+            setError('Please fill in all fields.');
+            return;
+        }
+        setIsLoading(true);
+        setError(null);
+        try {
+            await signIn(email.trim(), password);
+            // AuthGuard in _layout.tsx handles the redirect automatically
+        } catch (e: any) {
+            setError(mapFirebaseError(e.code));
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleGoRegister = async () => {
@@ -87,7 +107,7 @@ export default function Login() {
                     <View style={styles.formContainer}>
                         <EmailInputRow
                             value={email}
-                            onChangeText={setEmail}
+                            onChangeText={(t) => { setEmail(t); setError(null); }}
                             inputBg={colors.inputBackground}
                             inputBorder={colors.inputBorder}
                             inputText={colors.inputText}
@@ -96,7 +116,7 @@ export default function Login() {
                         <View style={{ height: 13 }} />
                         <PasswordInputRow
                             value={password}
-                            onChangeText={setPassword}
+                            onChangeText={(t) => { setPassword(t); setError(null); }}
                             isPasswordVisible={isPasswordVisible}
                             onToggleVisibility={handleTogglePasswordVisibility}
                             inputBg={colors.inputBackground}
@@ -109,12 +129,25 @@ export default function Login() {
                             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                         </View>
 
+                        {/* Error banner */}
+                        {error ? (
+                            <View style={styles.errorBanner}>
+                                <Feather name="alert-circle" size={14} color="#ff617b" style={{ marginRight: 6 }} />
+                                <Text style={styles.errorText}>{error}</Text>
+                            </View>
+                        ) : null}
+
                         <TouchableOpacity
                             onPress={handleLogin}
                             activeOpacity={0.85}
-                            style={styles.loginButton}
+                            disabled={isLoading}
+                            style={[styles.loginButton, isLoading && { opacity: 0.7 }]}
                         >
-                            <Text style={styles.loginButtonText}>Sign In</Text>
+                            {isLoading ? (
+                                <ActivityIndicator color="#FFFFFF" />
+                            ) : (
+                                <Text style={styles.loginButtonText}>Sign In</Text>
+                            )}
                         </TouchableOpacity>
                     </View>
 
@@ -202,6 +235,22 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         color: '#ff617b',
         opacity: 0.9,
+    },
+    errorBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 97, 123, 0.08)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 97, 123, 0.25)',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 9,
+        marginTop: 12,
+    },
+    errorText: {
+        color: '#ff617b',
+        fontSize: 13,
+        flex: 1,
     },
     loginButton: {
         backgroundColor: '#ff617b',

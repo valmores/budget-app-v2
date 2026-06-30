@@ -1,8 +1,7 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeAuth, inMemoryPersistence, getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// TODO: Replace with your Firebase project config
-// Go to Firebase Console → Project Settings → Your Apps → Web App → SDK setup
 const firebaseConfig = {
     apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
     authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -10,9 +9,23 @@ const firebaseConfig = {
     storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
     messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
     appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-    measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID
+    measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-const app = initializeApp(firebaseConfig);
+let firebaseAuth;
+try {
+    firebaseAuth = initializeAuth(app, {
+        persistence: inMemoryPersistence,
+    });
+} catch (error: any) {
+    if (error.code === 'auth/already-initialized') {
+        firebaseAuth = getAuth(app);
+    } else {
+        throw error;
+    }
+}
+
+export const auth = firebaseAuth;
 export const db = getFirestore(app);

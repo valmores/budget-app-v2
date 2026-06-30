@@ -1,3 +1,4 @@
+import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -8,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfilePage() {
     const { colors, isDark } = useTheme();
+    const { user, signOut } = useAuth();
     const router = useRouter();
     const menuItems = [
         { icon: 'user', label: 'Edit Profile' },
@@ -54,10 +56,10 @@ export default function ProfilePage() {
                     <Feather name="user" size={36} color={colors.accent} />
                 </View>
                 <Text style={{ fontSize: 18, fontWeight: '700', color: colors.textPrimary }}>
-                    John Doe
+                    {user?.displayName ?? 'User'}
                 </Text>
                 <Text style={{ fontSize: 14, color: colors.textSecondary, marginTop: 4 }}>
-                    john.doe@example.com
+                    {user?.email ?? ''}
                 </Text>
             </View>
 
@@ -88,9 +90,10 @@ export default function ProfilePage() {
                     {menuItems.map((item, index) => (
                         <Pressable
                             key={index}
-                            onPress={() => {
+                            onPress={async () => {
                                 if (item.label === 'Sign Out') {
-                                    router.replace('/(auth)/index');
+                                    await signOut();
+                                    // AuthGuard in _layout.tsx will redirect to /(auth)
                                 }
                             }}
                         >

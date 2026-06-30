@@ -1,12 +1,15 @@
 import EmailInputRow from '@/components/auth/EmailInputRow';
 import NameInputRow from '@/components/auth/NameInputRow';
 import PasswordInputRow from '@/components/auth/PasswordInputRow';
+import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import { mapFirebaseError } from '@/lib/authErrors';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
+    ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -20,16 +23,41 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function Register() {
     const router = useRouter();
     const { colors, isDark } = useTheme();
+    const { signUp } = useAuth();
+
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [, setNavLoading] = useState(false);
 
     const handleRegister = async () => {
-        router.replace('/dashboard/dashboard');
+        if (!name.trim() || !email.trim() || !password) {
+            setError('Please fill in all fields.');
+            return;
+        }
+        if (password !== confirmPassword) {
+            setError('Passwords do not match.');
+            return;
+        }
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters.');
+            return;
+        }
+        setIsLoading(true);
+        setError(null);
+        try {
+            await signUp(name.trim(), email.trim(), password);
+            // AuthGuard in _layout.tsx handles the redirect automatically
+        } catch (e: any) {
+            setError(mapFirebaseError(e.code));
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleGoLogin = async () => {
@@ -39,7 +67,7 @@ export default function Register() {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }
             await new Promise(resolve => requestAnimationFrame(resolve));
-            router.push('/(auth)/index');
+            router.push('/(auth)');
         } finally {
             setNavLoading(false);
         }
@@ -95,7 +123,7 @@ export default function Register() {
                                 } catch {
                                     // ignore
                                 }
-                                router.replace('/(auth)/index');
+                                router.replace('/(auth)');
                             }}
                             activeOpacity={0.7}
                             style={[
@@ -127,7 +155,7 @@ export default function Register() {
                     <View style={styles.formContainer}>
                         <NameInputRow
                             value={name}
-                            onChangeText={setName}
+                            onChangeText={(t) => { setName(t); setError(null); }}
                             inputBg={colors.inputBackground}
                             inputBorder={colors.inputBorder}
                             inputText={colors.inputText}
@@ -137,7 +165,7 @@ export default function Register() {
 
                         <EmailInputRow
                             value={email}
-                            onChangeText={setEmail}
+                            onChangeText={(t) => { setEmail(t); setError(null); }}
                             inputBg={colors.inputBackground}
                             inputBorder={colors.inputBorder}
                             inputText={colors.inputText}
@@ -147,7 +175,7 @@ export default function Register() {
 
                         <PasswordInputRow
                             value={password}
-                            onChangeText={setPassword}
+                            onChangeText={(t) => { setPassword(t); setError(null); }}
                             isPasswordVisible={isPasswordVisible}
                             onToggleVisibility={handleTogglePasswordVisibility}
                             placeholder="Create a password"
@@ -161,7 +189,7 @@ export default function Register() {
 
                         <PasswordInputRow
                             value={confirmPassword}
-                            onChangeText={setConfirmPassword}
+                            onChangeText={(t) => { setConfirmPassword(t); setError(null); }}
                             isPasswordVisible={isConfirmPasswordVisible}
                             onToggleVisibility={handleToggleConfirmPasswordVisibility}
                             placeholder="Confirm your password"
@@ -172,12 +200,25 @@ export default function Register() {
                             inputPlaceholder={colors.inputPlaceholder}
                         />
 
+                        {/* Error banner */}
+                        {error ? (
+                            <View style={styles.errorBanner}>
+                                <Feather name="alert-circle" size={14} color="#ff617b" style={{ marginRight: 6 }} />
+                                <Text style={styles.errorText}>{error}</Text>
+                            </View>
+                        ) : null}
+
                         <TouchableOpacity
                             onPress={handleRegister}
                             activeOpacity={0.85}
-                            style={styles.registerButton}
+                            disabled={isLoading}
+                            style={[styles.registerButton, isLoading && { opacity: 0.7 }]}
                         >
-                            <Text style={styles.registerButtonText}>Sign Up</Text>
+                            {isLoading ? (
+                                <ActivityIndicator color="#FFFFFF" />
+                            ) : (
+                                <Text style={styles.registerButtonText}>Sign Up</Text>
+                            )}
                         </TouchableOpacity>
                     </View>
 
@@ -272,6 +313,22 @@ const styles = StyleSheet.create({
     },
     formContainer: {
         width: '100%',
+    },
+    errorBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 97, 123, 0.08)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 97, 123, 0.25)',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 9,
+        marginTop: 12,
+    },
+    errorText: {
+        color: '#ff617b',
+        fontSize: 13,
+        flex: 1,
     },
     registerButton: {
         backgroundColor: '#ff617b',
