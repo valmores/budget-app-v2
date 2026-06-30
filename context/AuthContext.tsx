@@ -6,6 +6,8 @@ import {
     signOut as firebaseSignOut,
     updateProfile,
     User,
+    EmailAuthProvider,
+    reauthenticateWithCredential,
 } from 'firebase/auth';
 import {
     createContext,
@@ -26,6 +28,10 @@ type AuthContextValue = {
     signIn: (email: string, password: string) => Promise<void>;
     signUp: (name: string, email: string, password: string) => Promise<void>;
     signOut: () => Promise<void>;
+    transientEmail: string | null;
+    transientPassword: string | null;
+    clearTransientCredentials: () => void;
+    verifyPassword: (password: string) => Promise<void>;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -43,6 +49,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const isRegisteringRef = useRef(false);
 
+    // Transient in-memory storage for biometrics activation
+    const transientEmailRef = useRef<string | null>(null);
+    const transientPasswordRef = useRef<string | null>(null);
+
     // Subscribe to auth state changes once on mount
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -57,6 +67,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signIn = async (email: string, password: string) => {
         await signInWithEmailAndPassword(auth, email, password);
+        transientEmailRef.current = email;
+        transientPasswordRef.current = password;
     };
 
     const signUp = async (name: string, email: string, password: string) => {
@@ -68,6 +80,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Refresh local user state so displayName is available right away
             await credential.user.reload();
             setUser(auth.currentUser);
+            transientEmailRef.current = email;
+            transientPasswordRef.current = password;
         } finally {
             isRegisteringRef.current = false;
         }
@@ -75,10 +89,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signOut = async () => {
         await firebaseSignOut(auth);
+        clearTransientCredentials();
+    };
+
+    const clearTransientCredentials = () => {
+        transientEmailRef.current = null;
+        transientPasswordRef.current = null;
+    };
+
+    const verifyPassword = async (password: string) => {
+        if (!auth.currentUser || !auth.currentUser.email) {
+            throw new Error('No user is currently logged in.');
+        }
+        const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
+        await reauthenticateWithCredential(auth.currentUser, credential);
+        transientEmailRef.current = auth.currentUser.email;
+        transientPasswordRef.current = password;
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+        <AuthContext.Provider
+            value={{
+                user,
+                loading,
+                signIn,
+                signUp,
+                signOut,
+                transientEmail: transientEmailRef.current,
+                transientPassword: transientPasswordRef.current,
+                clearTransientCredentials,
+                verifyPassword,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );
@@ -95,3 +137,4 @@ export function useAuth(): AuthContextValue {
     }
     return ctx;
 }
+
