@@ -2,21 +2,107 @@ import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { Feather } from '@expo/vector-icons';
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import {
+    Alert,
+    Pressable,
+    Text,
+    View,
+} from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as LocalAuthentication from 'expo-local-authentication';
+import {
+    isBiometricsSupported,
+    getBiometricSetting,
+    saveCredentials,
+    clearCredentials,
+    getBiometricsLabel,
+} from '@/lib/biometrics';
+import BiometricActivationModal from '@/components/profile/BiometricActivationModal';
 
 export default function ProfilePage() {
     const { colors, isDark } = useTheme();
-    const { user, signOut } = useAuth();
-    const menuItems = [
-        { icon: 'user', label: 'Edit Profile' },
-        { icon: 'bell', label: 'Notifications' },
-        { icon: 'lock', label: 'Privacy & Security' },
-        { icon: 'moon', label: isDark ? 'Dark Mode (On)' : 'Light Mode (On)' },
-        { icon: 'help-circle', label: 'Help & Support' },
-        { icon: 'log-out', label: 'Sign Out' },
-    ] as const;
+    const { user, signOut, transientEmail, transientPassword } = useAuth();
+
+    const [biometricsSupported, setBiometricsSupported] = React.useState(false);
+    const [biometricsEnabled, setBiometricsEnabled] = React.useState(false);
+    const [biometricsLabel, setBiometricsLabel] = React.useState('Biometric');
+
+    // Password confirmation modal state
+    const [isPasswordModalVisible, setIsPasswordModalVisible] = React.useState(false);
+
+    React.useEffect(() => {
+        async function loadBiometricsState() {
+            const supported = await isBiometricsSupported();
+            setBiometricsSupported(supported);
+            if (supported) {
+                const label = await getBiometricsLabel();
+                setBiometricsLabel(label);
+                const setting = await getBiometricSetting();
+                setBiometricsEnabled(setting === 'enabled');
+            }
+        }
+        loadBiometricsState();
+    }, []);
+
+    const menuItems = React.useMemo(() => {
+        const items = [
+            { icon: 'user', id: 'edit-profile', label: 'Edit Profile' },
+            { icon: 'bell', id: 'notifications', label: 'Notifications' },
+            { icon: 'lock', id: 'privacy-security', label: 'Privacy & Security' },
+        ];
+
+        if (biometricsSupported) {
+            items.push({
+                icon: 'shield',
+                id: 'biometrics',
+                label: `${biometricsLabel} Login (${biometricsEnabled ? 'On' : 'Off'})`
+            });
+        }
+
+        items.push(
+            { icon: 'moon', id: 'dark-mode', label: isDark ? 'Dark Mode (On)' : 'Light Mode (On)' },
+            { icon: 'help-circle', id: 'help', label: 'Help & Support' },
+            { icon: 'log-out', id: 'sign-out', label: 'Sign Out' }
+        );
+
+        return items;
+    }, [isDark, biometricsSupported, biometricsEnabled, biometricsLabel]);
+
+    const handleToggleBiometrics = async () => {
+        if (biometricsEnabled) {
+            // Disable biometrics
+            Alert.alert(
+                `Disable ${biometricsLabel}`,
+                `Are you sure you want to disable ${biometricsLabel.toLowerCase()} login?`,
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Disable',
+                        style: 'destructive',
+                        onPress: async () => {
+                            await clearCredentials();
+                            setBiometricsEnabled(false);
+                        }
+                    }
+                ]
+            );
+        } else {
+            // Enable biometrics
+            if (transientEmail && transientPassword) {
+                const result = await LocalAuthentication.authenticateAsync({
+                    promptMessage: `Enable ${biometricsLabel}`,
+                });
+                if (result.success) {
+                    await saveCredentials(transientEmail, transientPassword);
+                    setBiometricsEnabled(true);
+                    Alert.alert('Success', `${biometricsLabel} login has been enabled.`);
+                }
+            } else {
+                setIsPasswordModalVisible(true);
+            }
+        }
+    };
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -85,18 +171,18 @@ export default function ProfilePage() {
                     showsVerticalScrollIndicator={false}
                     style={{ marginBottom: 40 }}
                 >
-                    {menuItems.map((item, index) => (
+                    {menuItems.map((item) => (
                         <Pressable
-                            key={index}
+                            key={item.id}
                             onPress={async () => {
-                                if (item.label === 'Sign Out') {
+                                if (item.id === 'sign-out') {
                                     await signOut();
-                                    // AuthGuard in _layout.tsx will redirect to /(auth)
+                                } else if (item.id === 'biometrics') {
+                                    await handleToggleBiometrics();
                                 }
                             }}
                         >
                             <View
-                                key={index}
                                 style={{
                                     flexDirection: 'row',
                                     alignItems: 'center',
@@ -119,7 +205,7 @@ export default function ProfilePage() {
                                         width: 36,
                                         height: 36,
                                         borderRadius: 10,
-                                        backgroundColor: item.label === 'Sign Out'
+                                        backgroundColor: item.id === 'sign-out'
                                             ? 'rgba(239,83,80,0.12)'
                                             : colors.accentSubtle,
                                         justifyContent: 'center',
@@ -128,9 +214,9 @@ export default function ProfilePage() {
                                     }}
                                 >
                                     <Feather
-                                        name={item.icon}
+                                        name={item.icon as React.ComponentProps<typeof Feather>['name']}
                                         size={18}
-                                        color={item.label === 'Sign Out' ? colors.error : colors.accent}
+                                        color={item.id === 'sign-out' ? colors.error : colors.accent}
                                     />
                                 </View>
                                 <Text
@@ -138,7 +224,7 @@ export default function ProfilePage() {
                                         flex: 1,
                                         fontSize: 15,
                                         fontWeight: '500',
-                                        color: item.label === 'Sign Out' ? colors.error : colors.textPrimary,
+                                        color: item.id === 'sign-out' ? colors.error : colors.textPrimary,
                                     }}
                                 >
                                     {item.label}
@@ -149,6 +235,14 @@ export default function ProfilePage() {
                     ))}
                 </ScrollView>
             </View>
+
+            {/* Modular password verification modal */}
+            <BiometricActivationModal
+                visible={isPasswordModalVisible}
+                onClose={() => setIsPasswordModalVisible(false)}
+                biometricsLabel={biometricsLabel}
+                onSuccess={() => setBiometricsEnabled(true)}
+            />
         </SafeAreaView>
     );
 }
