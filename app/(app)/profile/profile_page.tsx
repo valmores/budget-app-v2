@@ -90,7 +90,7 @@ export default function ProfilePage() {
                             key={index}
                             onPress={() => {
                                 if (item.label === 'Sign Out') {
-                                    router.replace('/');
+                                    router.replace('/(auth)/index');
                                 }
                             }}
                         >

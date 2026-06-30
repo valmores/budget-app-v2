@@ -1,186 +1,20 @@
+import EmailInputRow from '@/components/auth/EmailInputRow';
+import PasswordInputRow from '@/components/auth/PasswordInputRow';
 import { useTheme } from '@/context/ThemeContext';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
-    Animated,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ROOT CAUSE (definitive):
-//   On React Native with newArchEnabled: true (Fabric), any React state change
-//   that causes a re-render + style update on a View wrapping a focused
-//   TextInput triggers a native shadow-tree reconciliation. Fabric removes the
-//   TextInput from the native responder chain during this pass, effectively
-//   blurring it. The OS then snaps focus to the nearest other focusable view —
-//   the email or password field — producing the "chasing" border effect.
-//
-// FIX:
-//   Use Animated.Value to drive all focus visual changes (border color, icon
-//   color). Animated updates go through the native animation driver and bypass
-//   the React reconciliation cycle entirely — no re-renders, no shadow-tree
-//   diffs, no TextInput disruption.
-//
-//   Components are also kept at module scope (not defined inside Login) so
-//   their identity is stable and React never unmounts/remounts them.
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ── Email Input ───────────────────────────────────────────────────────────────
-
-type EmailInputRowProps = {
-    value: string;
-    onChangeText: (text: string) => void;
-    inputBg: string;
-    inputBorder: string;
-    inputText: string;
-    inputPlaceholder: string;
-};
-
-const EmailInputRow = memo(function EmailInputRow({
-    value,
-    onChangeText,
-    inputBg,
-    inputBorder,
-    inputText,
-    inputPlaceholder,
-}: EmailInputRowProps) {
-    const focusAnim = useRef(new Animated.Value(0)).current;
-
-    const borderColor = useMemo(
-        () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: [inputBorder, '#ff617b'] }),
-        [focusAnim, inputBorder],
-    );
-    const iconOpacity = useMemo(
-        () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
-        [focusAnim],
-    );
-
-    const handleFocus = useCallback(() => {
-        Animated.timing(focusAnim, { toValue: 1, duration: 180, useNativeDriver: false }).start();
-    }, [focusAnim]);
-
-    const handleBlur = useCallback(() => {
-        Animated.timing(focusAnim, { toValue: 0, duration: 180, useNativeDriver: false }).start();
-    }, [focusAnim]);
-
-    return (
-        <Animated.View style={[styles.inputWrapper, { borderColor, backgroundColor: inputBg }]}>
-            <View style={styles.inputIconContainer}>
-                <Feather name="mail" size={20} color="#8E8E93" />
-                <Animated.View style={[StyleSheet.absoluteFill, { opacity: iconOpacity }]}>
-                    <Feather name="mail" size={20} color="#ff617b" />
-                </Animated.View>
-            </View>
-            <TextInput
-                value={value}
-                editable={true}
-                onChangeText={onChangeText}
-                placeholder="name@example.com"
-                placeholderTextColor={inputPlaceholder}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="email"
-                textContentType="emailAddress"
-                onFocus={handleFocus}
-                onBlur={handleBlur}
-                style={[styles.textInput, { color: inputText }]}
-            />
-        </Animated.View>
-    );
-});
-
-// ── Password Input ────────────────────────────────────────────────────────────
-
-type PasswordInputRowProps = {
-    value: string;
-    onChangeText: (text: string) => void;
-    isPasswordVisible: boolean;
-    onToggleVisibility: () => void;
-    inputBg: string;
-    inputBorder: string;
-    inputText: string;
-    inputPlaceholder: string;
-};
-
-const PasswordInputRow = memo(function PasswordInputRow({
-    value,
-    onChangeText,
-    isPasswordVisible,
-    onToggleVisibility,
-    inputBg,
-    inputBorder,
-    inputText,
-    inputPlaceholder,
-}: PasswordInputRowProps) {
-    const focusAnim = useRef(new Animated.Value(0)).current;
-
-    const borderColor = useMemo(
-        () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: [inputBorder, '#ff617b'] }),
-        [focusAnim, inputBorder],
-    );
-    const iconOpacity = useMemo(
-        () => focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
-        [focusAnim],
-    );
-
-    const handleFocus = useCallback(() => {
-        Animated.timing(focusAnim, { toValue: 1, duration: 180, useNativeDriver: false }).start();
-    }, [focusAnim]);
-
-    const handleBlur = useCallback(() => {
-        Animated.timing(focusAnim, { toValue: 0, duration: 180, useNativeDriver: false }).start();
-    }, [focusAnim]);
-
-    return (
-        <Animated.View style={[styles.inputWrapper, { borderColor, backgroundColor: inputBg }]}>
-            <View style={styles.inputIconContainer}>
-                <Feather name="lock" size={20} color="#8E8E93" />
-                <Animated.View style={[StyleSheet.absoluteFill, { opacity: iconOpacity }]}>
-                    <Feather name="lock" size={20} color="#ff617b" />
-                </Animated.View>
-            </View>
-            <TextInput
-                value={value}
-                editable={true}
-                onChangeText={onChangeText}
-                placeholder="Enter your password"
-                placeholderTextColor={inputPlaceholder}
-                secureTextEntry={!isPasswordVisible}
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="current-password"
-                textContentType="password"
-                onFocus={handleFocus}
-                onBlur={handleBlur}
-                style={[styles.textInput, { color: inputText }]}
-            />
-            <TouchableOpacity
-                onPress={onToggleVisibility}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                style={styles.eyeIcon}
-            >
-                <Feather
-                    name={isPasswordVisible ? 'eye-off' : 'eye'}
-                    size={18}
-                    color="#8E8E93"
-                />
-            </TouchableOpacity>
-        </Animated.View>
-    );
-});
-
-// ── Login Screen ──────────────────────────────────────────────────────────────
 
 export default function Login() {
     const router = useRouter();
@@ -193,17 +27,15 @@ export default function Login() {
     const handleLogin = async () => {
         router.replace('/dashboard/dashboard');
     };
+
     const handleGoRegister = async () => {
         setNavLoading(true);
-
         try {
             if (Platform.OS !== 'web') {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }
-
             // small "frame sync delay"
             await new Promise(resolve => requestAnimationFrame(resolve));
-
             router.push('/register');
         } finally {
             setNavLoading(false);
@@ -364,26 +196,6 @@ const styles = StyleSheet.create({
     },
     formContainer: {
         width: '100%',
-    },
-    inputWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderRadius: 10,
-        paddingHorizontal: 20,
-        height: 56,
-    },
-    inputIconContainer: {
-        marginRight: 12,
-    },
-    textInput: {
-        flex: 1,
-        fontSize: 15,
-        fontWeight: '500',
-        height: '100%',
-    },
-    eyeIcon: {
-        paddingLeft: 8,
     },
     forgotPasswordText: {
         fontSize: 13,

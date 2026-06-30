@@ -13,19 +13,9 @@ export default function RootLayout() {
             animationTypeForReplace: 'push',
           }}
         >
-          <Stack.Screen
-            name="index"
-            options={{
-              animation: 'slide_from_left',
-            }}
-          />
-          <Stack.Screen
-            name="register"
-            options={{
-              animation: 'slide_from_right',
-            }}
-          />
-          <Stack.Screen name="(app)" />
+          {/* Auth screens — animations are handled inside (auth)/_layout.tsx */}
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="(app)" options={{ headerShown: false }} />
         </Stack>
       </ThemeProvider>
     </GestureHandlerRootView>
