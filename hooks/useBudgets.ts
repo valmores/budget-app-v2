@@ -11,7 +11,7 @@ import {
     updateDoc,
     writeBatch
 } from "firebase/firestore";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -73,7 +73,6 @@ export function useBudgets() {
     const [budgets, setBudgets] = useState<BudgetPeriod[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const isFirstLoad = useRef(true);
 
     // Hold the latest flat lists so we can re-build the tree when either changes
     const [rawPeriods, setRawPeriods] = useState<BudgetPeriod[]>([]);
@@ -101,27 +100,17 @@ export function useBudgets() {
                         subBudgets: [], // filled by buildTree
                     } as BudgetPeriod;
                 });
-                setRawPeriods(periods);
-                if (isFirstLoad.current) {
-                    setTimeout(() => {
-                        setLoading(false);
-                        isFirstLoad.current = false;
-                    }, 3000);
-                } else {
+                setTimeout(() => {
+                    setRawPeriods(periods);
                     setLoading(false);
-                }
+                }, 600);
             },
             (err) => {
                 console.error("budgetPeriods listener error:", err);
-                setError(err.message);
-                if (isFirstLoad.current) {
-                    setTimeout(() => {
-                        setLoading(false);
-                        isFirstLoad.current = false;
-                    }, 1000);
-                } else {
+                setTimeout(() => {
+                    setError(err.message);
                     setLoading(false);
-                }
+                }, 600);
             }
         );
         return unsubscribe;
