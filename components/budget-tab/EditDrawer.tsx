@@ -1,3 +1,4 @@
+import { useAuth } from "@/context/AuthContext";
 import { BudgetNode, BudgetPeriod } from "@/types/budget";
 import React, { useEffect, useState } from "react";
 import { Keyboard, Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -17,6 +18,7 @@ interface EditDrawerProps {
 }
 
 export default function EditDrawer({ budget, colors, onClose, onSave }: EditDrawerProps) {
+    const { user } = useAuth();
     const [drawerOffset, setDrawerOffset] = useState(0);
     const [activeInput, setActiveInput] = useState<"title" | "amount" | null>(null);
     const [title, setTitle] = useState(budget.title);
@@ -48,7 +50,10 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
 
     const handleSave = () => {
         const parsed = parseFloat(amount);
-        const update: Partial<BudgetNode & BudgetPeriod> = { title };
+        const update: Partial<BudgetNode & BudgetPeriod> = {
+            title,
+            added_by: user?.email ?? "unknown"
+        };
         if (!isNaN(parsed)) {
             if (isIncomeBudget) {
                 (update as Partial<BudgetPeriod>).income = parsed;

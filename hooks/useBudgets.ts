@@ -215,7 +215,7 @@ export function useBudgets() {
      */
     const updateBudget = async (
         id: string,
-        updates: Partial<{ title: string; income: number; spent: number; date: Timestamp }>,
+        updates: Partial<{ title: string; income: number; spent: number; added_by: string; date: Timestamp }>,
         isPeriod: boolean
     ) => {
         const colName = isPeriod ? "budgetPeriods" : "budgetNodes";

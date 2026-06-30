@@ -118,6 +118,7 @@ export default function BudgetsScreen() {
         if (updated.title !== undefined) firestoreUpdates.title = updated.title;
         if (isPeriod && updated.income !== undefined) firestoreUpdates.income = updated.income;
         if (!isPeriod && updated.spent !== undefined) firestoreUpdates.spent = updated.spent;
+        if (updated.added_by !== undefined) firestoreUpdates.added_by = updated.added_by;
 
         await updateBudget(editTarget.id, firestoreUpdates, isPeriod);
 
