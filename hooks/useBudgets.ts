@@ -73,6 +73,13 @@ export function useBudgets() {
     const [budgets, setBudgets] = useState<BudgetPeriod[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [refreshing, setRefreshing] = useState(false);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    const refresh = () => {
+        setRefreshing(true);
+        setRefreshTrigger((prev) => prev + 1);
+    };
 
     // Hold the latest flat lists so we can re-build the tree when either changes
     const [rawPeriods, setRawPeriods] = useState<BudgetPeriod[]>([]);
@@ -103,18 +110,20 @@ export function useBudgets() {
                 setTimeout(() => {
                     setRawPeriods(periods);
                     setLoading(false);
-                }, 600);
+                    setRefreshing(false);
+                }, refreshing ? 1500 : 600);
             },
             (err) => {
                 console.error("budgetPeriods listener error:", err);
                 setTimeout(() => {
                     setError(err.message);
                     setLoading(false);
+                    setRefreshing(false);
                 }, 600);
             }
         );
         return unsubscribe;
-    }, []);
+    }, [refreshTrigger]);
 
     // ── Real-time listener: budgetNodes ───────────────────────────────────────
     useEffect(() => {
@@ -148,7 +157,7 @@ export function useBudgets() {
             }
         );
         return unsubscribe;
-    }, []);
+    }, [refreshTrigger]);
 
     // ── Rebuild tree whenever raw data changes ────────────────────────────────
     useEffect(() => {
@@ -239,6 +248,8 @@ export function useBudgets() {
         budgets,
         loading,
         error,
+        refreshing,
+        refresh,
         addBudgetPeriod,
         addBudgetNode,
         updateBudget,

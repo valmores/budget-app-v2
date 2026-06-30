@@ -10,7 +10,7 @@ import { BudgetNode, BudgetPeriod } from "@/types/budget";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { BackHandler, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { BackHandler, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function BudgetsScreen() {
@@ -19,7 +19,7 @@ export default function BudgetsScreen() {
     const [showAddDrawer, setShowAddDrawer] = useState(false);
     const [editTarget, setEditTarget] = useState<BudgetNode | BudgetPeriod | null>(null);
 
-    const { budgets, loading, error, addBudgetPeriod, addBudgetNode, updateBudget, deleteBudget } =
+    const { budgets, loading, error, refreshing, refresh, addBudgetPeriod, addBudgetNode, updateBudget, deleteBudget } =
         useBudgets();
 
     const currentParentId = navStack.length > 0 ? navStack[navStack.length - 1].id : null;
@@ -238,6 +238,15 @@ export default function BudgetsScreen() {
                     paddingHorizontal: 16,
                 }}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={refresh}
+                        colors={[colors.accent]}
+                        tintColor={colors.accent}
+                        progressBackgroundColor={colors.background}
+                    />
+                }
             >
 
                 {activeList?.map((budget) => (
