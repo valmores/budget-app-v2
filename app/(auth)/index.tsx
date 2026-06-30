@@ -3,12 +3,22 @@ import PasswordInputRow from '@/components/auth/PasswordInputRow';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { mapFirebaseError } from '@/lib/authErrors';
+import {
+    clearCredentials,
+    getBiometricSetting,
+    getBiometricsLabel,
+    getSavedCredentials,
+    isBiometricsSupported,
+    setBiometricSetting,
+} from '@/lib/biometrics';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -30,6 +40,18 @@ export default function Login() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [, setNavLoading] = useState(false);
+    const [isBiometricsAvailable, setIsBiometricsAvailable] = useState(false);
+
+    useEffect(() => {
+        async function checkBiometrics() {
+            const supported = await isBiometricsSupported();
+            setIsBiometricsAvailable(supported);
+            if (supported) {
+                const label = await getBiometricsLabel();
+            }
+        }
+        checkBiometrics();
+    }, []);
 
     const handleLogin = async () => {
         if (!email.trim() || !password) {
@@ -39,6 +61,13 @@ export default function Login() {
         setIsLoading(true);
         setError(null);
         try {
+            const savedCreds = await getSavedCredentials();
+            if (savedCreds && savedCreds.email.toLowerCase() !== email.trim().toLowerCase()) {
+                await setBiometricSetting('unprompted');
+                await clearCredentials();
+            } else if (!savedCreds) {
+                await setBiometricSetting('unprompted');
+            }
             await signIn(email.trim(), password);
             // AuthGuard in _layout.tsx handles the redirect automatically
         } catch (e: any) {
@@ -72,9 +101,53 @@ export default function Login() {
             // ignore
         }
     }, []);
-    const handleFingerprintLogin = () => {
 
-    }
+    const handleFingerprintLogin = async () => {
+        setError(null);
+        const supported = await isBiometricsSupported();
+        if (!supported) {
+            Alert.alert('Not Supported', 'Biometric authentication is not supported or set up on this device.');
+            return;
+        }
+
+        const setting = await getBiometricSetting();
+        const savedCreds = await getSavedCredentials();
+        if (setting !== 'enabled' || !savedCreds) {
+            Alert.alert(
+                'Biometrics Not Enabled',
+                'Please sign in manually with email and password first, then enable biometric login.'
+            );
+            return;
+        }
+
+        const label = await getBiometricsLabel();
+        try {
+            if (Platform.OS !== 'web') {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            }
+        } catch {
+            // ignore
+        }
+
+        const result = await LocalAuthentication.authenticateAsync({
+            promptMessage: `Log in with ${label}`,
+            fallbackLabel: 'Use Passcode',
+        });
+
+        if (result.success) {
+            setIsLoading(true);
+            try {
+                await signIn(savedCreds.email, savedCreds.password);
+            } catch (e: any) {
+                if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+                    await clearCredentials();
+                }
+                setError(mapFirebaseError(e.code));
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    };
 
     const bg = isDark ? '#0F0F12' : '#ffffff';
     const glowOpacity = isDark ? 0.06 : 0.04;
@@ -163,16 +236,18 @@ export default function Login() {
                                 </Text>
                             </Text>
                         </View>
-                        <TouchableOpacity
-                            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 20 }}
-                            onPress={handleFingerprintLogin}
-                        >
-                            <MaterialCommunityIcons
-                                name="fingerprint"
-                                size={40}
-                                color={colors.accent}
-                            />
-                        </TouchableOpacity>
+                        {isBiometricsAvailable && (
+                            <TouchableOpacity
+                                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 20 }}
+                                onPress={handleFingerprintLogin}
+                            >
+                                <MaterialCommunityIcons
+                                    name="fingerprint"
+                                    size={40}
+                                    color={colors.accent}
+                                />
+                            </TouchableOpacity>
+                        )}
                     </View>
 
                     {/* Footer */}
