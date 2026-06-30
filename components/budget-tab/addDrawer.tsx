@@ -1,4 +1,5 @@
 import { BudgetNode, BudgetPeriod } from "@/types/budget";
+import { useAuth } from "@/context/AuthContext";
 import { Timestamp } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { Keyboard, Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -16,11 +17,11 @@ interface AddDrawerProps {
 }
 
 export default function AddDrawer({ currentParent, colors, setShowAddDrawer, onSave }: AddDrawerProps) {
+    const { user } = useAuth();
     const [drawerOffset, setDrawerOffset] = useState(0);
-    const [activeInput, setActiveInput] = useState<"title" | "amount" | "name" | null>(null);
+    const [activeInput, setActiveInput] = useState<"title" | "amount" | null>(null);
     const [title, setTitle] = useState("");
     const [amount, setAmount] = useState("");
-    const [addedBy, setAddedBy] = useState("");
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +33,7 @@ export default function AddDrawer({ currentParent, colors, setShowAddDrawer, onS
         const show = Keyboard.addListener("keyboardDidShow", () => {
             if (activeInput === "title") {
                 setDrawerOffset(-250);
-            } else if (activeInput === "amount" || activeInput === "name") {
+            } else if (activeInput === "amount") {
                 setDrawerOffset(-220);
             }
         });
@@ -58,10 +59,6 @@ export default function AddDrawer({ currentParent, colors, setShowAddDrawer, onS
             setError("Please enter a valid amount.");
             return;
         }
-        if (!addedBy.trim()) {
-            setError("Please enter your name.");
-            return;
-        }
 
         setError(null);
         setSaving(true);
@@ -69,7 +66,7 @@ export default function AddDrawer({ currentParent, colors, setShowAddDrawer, onS
             await onSave({
                 title: title.trim(),
                 amount: parsed,
-                added_by: addedBy.trim(),
+                added_by: user?.email ?? "unknown",
                 date: Timestamp.now(),
             });
             setShowAddDrawer(false);
@@ -191,34 +188,6 @@ export default function AddDrawer({ currentParent, colors, setShowAddDrawer, onS
                         }}
                         onFocus={() => {
                             setActiveInput("amount");
-                            setDrawerOffset(-220);
-                        }}
-                    />
-                </View>
-
-                {/* Added By */}
-                <View style={{ marginBottom: 12 }}>
-                    <Text style={{ fontSize: 11, fontWeight: "600", color: colors.accent, marginBottom: 6, letterSpacing: 0.5 }}>
-                        ADDED BY
-                    </Text>
-                    <TextInput
-                        value={addedBy}
-                        onChangeText={setAddedBy}
-                        placeholder="Your name"
-                        placeholderTextColor="#9CA3AF"
-                        keyboardType="default"
-                        style={{
-                            backgroundColor: colors.surface,
-                            borderWidth: 1,
-                            borderColor: colors.border,
-                            borderRadius: 12,
-                            paddingHorizontal: 16,
-                            paddingVertical: 14,
-                            fontSize: 16,
-                            color: colors.textPrimary,
-                        }}
-                        onFocus={() => {
-                            setActiveInput("name");
                             setDrawerOffset(-220);
                         }}
                     />
