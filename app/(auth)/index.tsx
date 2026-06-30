@@ -3,7 +3,7 @@ import PasswordInputRow from '@/components/auth/PasswordInputRow';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { mapFirebaseError } from '@/lib/authErrors';
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -72,6 +72,9 @@ export default function Login() {
             // ignore
         }
     }, []);
+    const handleFingerprintLogin = () => {
+
+    }
 
     const bg = isDark ? '#0F0F12' : '#ffffff';
     const glowOpacity = isDark ? 0.06 : 0.04;
@@ -149,20 +152,31 @@ export default function Login() {
                                 <Text style={styles.loginButtonText}>Sign In</Text>
                             )}
                         </TouchableOpacity>
+                        <View style={styles.footerContainer}>
+                            <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+                                {"Don't have an account yet? "}
+                                <Text
+                                    style={styles.signUpText}
+                                    onPress={handleGoRegister}
+                                >
+                                    Sign Up
+                                </Text>
+                            </Text>
+                        </View>
+                        <TouchableOpacity
+                            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 20 }}
+                            onPress={handleFingerprintLogin}
+                        >
+                            <MaterialCommunityIcons
+                                name="fingerprint"
+                                size={40}
+                                color={colors.accent}
+                            />
+                        </TouchableOpacity>
                     </View>
 
                     {/* Footer */}
-                    <View style={styles.footerContainer}>
-                        <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-                            {"Don't have an account yet? "}
-                            <Text
-                                style={styles.signUpText}
-                                onPress={handleGoRegister}
-                            >
-                                Sign Up
-                            </Text>
-                        </Text>
-                    </View>
+
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
