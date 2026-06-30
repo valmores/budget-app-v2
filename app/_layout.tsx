@@ -1,9 +1,8 @@
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
-import { useRouter, useSegments } from 'expo-router';
-import { Stack } from 'expo-router';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Auth guard — lives inside AuthProvider so it can read useAuth()
@@ -25,7 +24,7 @@ function AuthGuard() {
       // Signed in — send to app
       router.replace('/(app)/dashboard/dashboard');
     }
-  }, [user, loading, segments]);
+  }, [user, loading, segments, router]);
 
   return null;
 }

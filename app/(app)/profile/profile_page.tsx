@@ -1,7 +1,6 @@
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
@@ -10,7 +9,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function ProfilePage() {
     const { colors, isDark } = useTheme();
     const { user, signOut } = useAuth();
-    const router = useRouter();
     const menuItems = [
         { icon: 'user', label: 'Edit Profile' },
         { icon: 'bell', label: 'Notifications' },
