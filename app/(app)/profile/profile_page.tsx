@@ -10,7 +10,7 @@ import {
 } from '@/lib/biometrics';
 import { Feather } from '@expo/vector-icons';
 import * as LocalAuthentication from 'expo-local-authentication';
-import React from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     Alert,
     Pressable,
@@ -24,14 +24,15 @@ export default function ProfilePage() {
     const { colors, isDark } = useTheme();
     const { user, signOut, transientEmail, transientPassword } = useAuth();
 
-    const [biometricsSupported, setBiometricsSupported] = React.useState(false);
-    const [biometricsEnabled, setBiometricsEnabled] = React.useState(false);
-    const [biometricsLabel, setBiometricsLabel] = React.useState('Biometric');
+    const [biometricsSupported, setBiometricsSupported] = useState(false);
+    const [biometricsEnabled, setBiometricsEnabled] = useState(false);
+    const [biometricsLabel, setBiometricsLabel] = useState('Biometric');
+
 
     // Password confirmation modal state
-    const [isPasswordModalVisible, setIsPasswordModalVisible] = React.useState(false);
+    const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
 
-    React.useEffect(() => {
+    useEffect(() => {
         async function loadBiometricsState() {
             const supported = await isBiometricsSupported();
             setBiometricsSupported(supported);
@@ -45,13 +46,24 @@ export default function ProfilePage() {
         loadBiometricsState();
     }, []);
 
-    const menuItems = React.useMemo(() => {
+    const menuItems = useMemo(() => {
         const items = [
             { icon: 'user', id: 'edit-profile', label: 'Edit Profile' },
+            // { icon: 'bell', id: 'notifications', label: 'Notifications' },
+            // { icon: 'lock', id: 'privacy-security', label: 'Privacy & Security' },
         ];
+
+        if (biometricsSupported) {
+            items.push({
+                icon: 'shield',
+                id: 'biometrics',
+                label: `${biometricsLabel} Login (${biometricsEnabled ? 'On' : 'Off'})`
+            });
+        }
 
         items.push(
             { icon: 'moon', id: 'dark-mode', label: isDark ? 'Dark Mode (On)' : 'Light Mode (On)' },
+            // { icon: 'help-circle', id: 'help', label: 'Help & Support' },
             { icon: 'log-out', id: 'sign-out', label: 'Sign Out' }
         );
 
@@ -160,7 +172,7 @@ export default function ProfilePage() {
                     showsVerticalScrollIndicator={false}
                     style={{ marginBottom: 40 }}
                 >
-                    {menuItems.map((item) => (
+                    {menuItems.map((item: { id: string, label: string, icon: string }) => (
                         <Pressable
                             key={item.id}
                             onPress={async () => {
