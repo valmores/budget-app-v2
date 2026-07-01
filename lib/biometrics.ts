@@ -1,6 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BIOMETRIC_SETTING_KEY = 'biometric_login_setting';
 
@@ -44,9 +44,9 @@ export async function getSavedCredentials(): Promise<{ email: string; password: 
 }
 
 export async function getBiometricsLabel(): Promise<string> {
-    const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
-    if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
-        return 'Face ID';
-    }
+    // const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
+    // if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
+    //     return 'Face ID';
+    // }
     return 'Fingerprint';
 }
