@@ -1,3 +1,4 @@
+import BioNotEnabled from '@/components/auth/BioNotEnabled';
 import EmailInputRow from '@/components/auth/EmailInputRow';
 import PasswordInputRow from '@/components/auth/PasswordInputRow';
 import { useAuth } from '@/context/AuthContext';
@@ -41,6 +42,7 @@ export default function Login() {
     const [error, setError] = useState<string | null>(null);
     const [, setNavLoading] = useState(false);
     const [isBiometricsAvailable, setIsBiometricsAvailable] = useState(false);
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
         async function checkBiometrics() {
@@ -113,11 +115,14 @@ export default function Login() {
         const setting = await getBiometricSetting();
         const savedCreds = await getSavedCredentials();
         if (setting !== 'enabled' || !savedCreds) {
-            Alert.alert(
-                'Biometrics Not Enabled',
-                'Please sign in manually with email and password first, then enable biometric login.'
-            );
+
+            setShowModal(true);
             return;
+            // Alert.alert(
+            //     'Biometrics Not Enabled',
+            //     'Please sign in manually with email and password first, then enable biometric login.'
+            // );
+            // return;
         }
 
         const label = await getBiometricsLabel();
@@ -254,6 +259,13 @@ export default function Login() {
 
                 </ScrollView>
             </KeyboardAvoidingView>
+            <BioNotEnabled
+                visible={showModal}
+                title="Biometrics Not Enabled"
+                message="Please sign in manually with your email and password first, then enable biometric login."
+                onClose={() => setShowModal(false)}
+                onConfirm={() => setShowModal(false)}
+            />
         </SafeAreaView>
     );
 }
