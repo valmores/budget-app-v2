@@ -1,7 +1,10 @@
-import React from "react";
+import CustomModal from "@/components/auth/BioNotEnabled";
+import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
+import { getBiometricSetting, getBiometricsLabel, isBiometricsSupported, saveCredentials, setBiometricSetting } from "@/lib/biometrics";
+import React, { useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "@/context/ThemeContext";
 
 const transactions = [
     { id: 1, name: "Groceries", amount: "-₱500", expense: true },
@@ -12,6 +15,26 @@ const transactions = [
 
 export default function Home() {
     const { colors, isDark } = useTheme();
+    const [label, setLabel] = useState('');
+    const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
+    const { transientEmail, transientPassword, clearTransientCredentials } = useAuth();
+
+    useEffect(() => {
+        async function checkBiometricsPrompt() {
+            const supported = await isBiometricsSupported();
+            if (!supported) return;
+
+            const setting = await getBiometricSetting();
+            if (setting !== 'unprompted') return;
+
+            if (transientEmail && transientPassword) {
+                setLabel(await getBiometricsLabel());
+                setShowBiometricPrompt(true);
+
+            }
+        }
+        checkBiometricsPrompt();
+    }, [transientEmail, transientPassword, clearTransientCredentials]);
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -109,7 +132,7 @@ export default function Home() {
                     Recent Transactions
                 </Text>
 
-                {transactions.map((item) => (
+                {transactions?.map((item) => (
                     <View
                         key={item.id}
                         style={{
@@ -144,6 +167,34 @@ export default function Home() {
                     </View>
                 ))}
             </ScrollView>
+            <CustomModal
+                visible={showBiometricPrompt}
+                type="info"
+                title={`Enable ${label} Login`}
+                message={`Would you like to enable ${label.toLowerCase()} login for faster and more secure access next time?`}
+                confirmText="Enable"
+                cancelText="No, Thanks"
+                onCancel={async () => {
+                    await setBiometricSetting('disabled');
+                    clearTransientCredentials();
+                    setShowBiometricPrompt(false);
+                }}
+                onConfirm={async () => {
+                    try {
+                        await saveCredentials(transientEmail ?? '', transientPassword ?? '');
+
+                        setShowBiometricPrompt(false);
+
+                        // You can show another success modal here
+                    } catch {
+                        setShowBiometricPrompt(false);
+
+                        // You can show an error modal here
+                    } finally {
+                        clearTransientCredentials();
+                    }
+                }}
+            />
         </SafeAreaView>
     );
 }
