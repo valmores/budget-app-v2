@@ -1,6 +1,15 @@
+import BiometricActivationModal from '@/components/profile/BiometricActivationModal';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import {
+    clearCredentials,
+    getBiometricSetting,
+    getBiometricsLabel,
+    isBiometricsSupported,
+    saveCredentials,
+} from '@/lib/biometrics';
 import { Feather } from '@expo/vector-icons';
+import * as LocalAuthentication from 'expo-local-authentication';
 import React from 'react';
 import {
     Alert,
@@ -10,15 +19,6 @@ import {
 } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as LocalAuthentication from 'expo-local-authentication';
-import {
-    isBiometricsSupported,
-    getBiometricSetting,
-    saveCredentials,
-    clearCredentials,
-    getBiometricsLabel,
-} from '@/lib/biometrics';
-import BiometricActivationModal from '@/components/profile/BiometricActivationModal';
 
 export default function ProfilePage() {
     const { colors, isDark } = useTheme();
@@ -48,21 +48,10 @@ export default function ProfilePage() {
     const menuItems = React.useMemo(() => {
         const items = [
             { icon: 'user', id: 'edit-profile', label: 'Edit Profile' },
-            { icon: 'bell', id: 'notifications', label: 'Notifications' },
-            { icon: 'lock', id: 'privacy-security', label: 'Privacy & Security' },
         ];
-
-        if (biometricsSupported) {
-            items.push({
-                icon: 'shield',
-                id: 'biometrics',
-                label: `${biometricsLabel} Login (${biometricsEnabled ? 'On' : 'Off'})`
-            });
-        }
 
         items.push(
             { icon: 'moon', id: 'dark-mode', label: isDark ? 'Dark Mode (On)' : 'Light Mode (On)' },
-            { icon: 'help-circle', id: 'help', label: 'Help & Support' },
             { icon: 'log-out', id: 'sign-out', label: 'Sign Out' }
         );
 
