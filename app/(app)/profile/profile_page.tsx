@@ -1,3 +1,4 @@
+import CustomModal from '@/components/auth/BioNotEnabled';
 import BiometricActivationModal from '@/components/profile/BiometricActivationModal';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
@@ -5,17 +6,14 @@ import {
     clearCredentials,
     getBiometricSetting,
     getBiometricsLabel,
-    isBiometricsSupported,
-    saveCredentials,
+    isBiometricsSupported
 } from '@/lib/biometrics';
 import { Feather } from '@expo/vector-icons';
-import * as LocalAuthentication from 'expo-local-authentication';
 import { useEffect, useMemo, useState } from 'react';
 import {
-    Alert,
     Pressable,
     Text,
-    View,
+    View
 } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,10 +21,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function ProfilePage() {
     const { colors, isDark } = useTheme();
     const { user, signOut, transientEmail, transientPassword } = useAuth();
-
+    const [disableFingerprint, setDisableFingerprint] = useState(false);
+    const [fingerprintEnabled, setFingerprintEnabled] = useState(false)
     const [biometricsSupported, setBiometricsSupported] = useState(false);
     const [biometricsEnabled, setBiometricsEnabled] = useState(false);
     const [biometricsLabel, setBiometricsLabel] = useState('Biometric');
+    const [showBiometricModal, setShowBiometricModal] = useState(false);
+    const [modalMode, setModalMode] = useState<'enable' | 'disable'>('enable');
 
 
     // Password confirmation modal state
@@ -72,36 +73,11 @@ export default function ProfilePage() {
 
     const handleToggleBiometrics = async () => {
         if (biometricsEnabled) {
-            // Disable biometrics
-            Alert.alert(
-                `Disable ${biometricsLabel}`,
-                `Are you sure you want to disable ${biometricsLabel.toLowerCase()} login?`,
-                [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                        text: 'Disable',
-                        style: 'destructive',
-                        onPress: async () => {
-                            await clearCredentials();
-                            setBiometricsEnabled(false);
-                        }
-                    }
-                ]
-            );
+            setModalMode('disable');
+            setShowBiometricModal(true);
         } else {
-            // Enable biometrics
-            if (transientEmail && transientPassword) {
-                const result = await LocalAuthentication.authenticateAsync({
-                    promptMessage: `Enable ${biometricsLabel}`,
-                });
-                if (result.success) {
-                    await saveCredentials(transientEmail, transientPassword);
-                    setBiometricsEnabled(true);
-                    Alert.alert('Success', `${biometricsLabel} login has been enabled.`);
-                }
-            } else {
-                setIsPasswordModalVisible(true);
-            }
+            setModalMode('enable');
+            setShowBiometricModal(true);
         }
     };
 
@@ -244,6 +220,38 @@ export default function ProfilePage() {
                 biometricsLabel={biometricsLabel}
                 onSuccess={() => setBiometricsEnabled(true)}
             />
+
+            {/* Disable Fingerprint Modal */}
+            <CustomModal
+                visible={showBiometricModal}
+                title={
+                    modalMode === 'disable'
+                        ? `Disable ${biometricsLabel}`
+                        : `Enable ${biometricsLabel}`
+                }
+                message={
+                    modalMode === 'disable'
+                        ? `Are you sure you want to disable ${biometricsLabel.toLowerCase()} login?`
+                        : `Would you like to enable ${biometricsLabel.toLowerCase()} login?`
+                }
+                confirmText={
+                    modalMode === 'disable'
+                        ? 'Disable'
+                        : 'Enable'
+                }
+                onConfirm={async () => {
+                    if (modalMode === 'disable') {
+                        await clearCredentials();
+                        setBiometricsEnabled(false);
+                    } else {
+                        // enable logic
+                    }
+
+                    setShowBiometricModal(false);
+                }}
+                onCancel={() => setShowBiometricModal(false)}
+            />
+
         </SafeAreaView>
     );
 }
