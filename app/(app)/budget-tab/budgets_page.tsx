@@ -5,8 +5,8 @@ import BudgetSkeleton from "@/components/budget-tab/BudgetSkeleton";
 import EditDrawer from "@/components/budget-tab/EditDrawer";
 import SummaryCard from "@/components/budget-tab/SummaryCard";
 import { useTheme } from "@/context/ThemeContext";
-import { useBudgets } from "@/hooks/useBudgets";
-import { BudgetNode, BudgetPeriod } from "@/types/budget";
+import { formatTimestamp, useBudgets } from "@/hooks/useBudgets";
+import { BudgetNode, BudgetPeriod, BudgetUpdate } from "@/types/budget";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
@@ -108,7 +108,7 @@ export default function BudgetsScreen() {
         setEditTarget(budget);
     };
 
-    const handleSaveEdit = async (updated: Partial<BudgetNode & BudgetPeriod>) => {
+    const handleSaveEdit = async (updated: BudgetUpdate) => {
         if (!editTarget) return;
 
         const isPeriod = 'income' in editTarget;
@@ -119,14 +119,17 @@ export default function BudgetsScreen() {
         if (isPeriod && updated.income !== undefined) firestoreUpdates.income = updated.income;
         if (!isPeriod && updated.spent !== undefined) firestoreUpdates.spent = updated.spent;
         if (updated.added_by !== undefined) firestoreUpdates.added_by = updated.added_by;
+        if (updated.date !== undefined) firestoreUpdates.date = updated.date;
 
         await updateBudget(editTarget.id, firestoreUpdates, isPeriod);
 
-        // Also update navStack entry if the edited item is in the stack
+        // Also update navStack entry with date converted back to a display string
         setNavStack((prev) =>
-            prev.map((item) =>
-                item.id === editTarget.id ? { ...item, ...updated } : item
-            )
+            prev.map((item) => {
+                if (item.id !== editTarget.id) return item;
+                const { date, ...rest } = updated;
+                return { ...item, ...rest, date: date ? formatTimestamp(date) : item.date } as BudgetNode | BudgetPeriod;
+            })
         );
         setEditTarget(null);
     };

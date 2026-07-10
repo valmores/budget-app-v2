@@ -1,7 +1,9 @@
 import { useAuth } from "@/context/AuthContext";
-import { BudgetNode, BudgetPeriod } from "@/types/budget";
+import { BudgetNode, BudgetPeriod, BudgetUpdate } from "@/types/budget";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import { Timestamp } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import { Keyboard, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Keyboard, Platform, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 interface EditDrawerProps {
     budget: BudgetNode | BudgetPeriod;
@@ -14,7 +16,7 @@ interface EditDrawerProps {
         warning: string;
     };
     onClose: () => void;
-    onSave: (updated: Partial<BudgetNode & BudgetPeriod>) => void;
+    onSave: (updated: BudgetUpdate) => void;
 }
 
 export default function EditDrawer({ budget, colors, onClose, onSave }: EditDrawerProps) {
@@ -28,6 +30,16 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
             : String((budget as BudgetNode).spent ?? "")
     );
     const isIncomeBudget = "income" in budget;
+
+    // Parse the display string (e.g. "Jun 30, 2026") back into a Date for the picker.
+    const [selectedDate, setSelectedDate] = useState<Date>(() => {
+        const parsed = new Date(budget.date);
+        return isNaN(parsed.getTime()) ? new Date() : parsed;
+    });
+    const [showDatePicker, setShowDatePicker] = useState(false);
+
+    const formatDate = (date: Date) =>
+        date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
     useEffect(() => {
         const show = Keyboard.addListener("keyboardDidShow", () => {
@@ -50,9 +62,10 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
 
     const handleSave = () => {
         const parsed = parseFloat(amount);
-        const update: Partial<BudgetNode & BudgetPeriod> = {
+        const update: BudgetUpdate = {
             title,
-            added_by: user?.email ?? "unknown"
+            added_by: user?.email ?? "unknown",
+            date: Timestamp.fromDate(selectedDate),
         };
         if (!isNaN(parsed)) {
             if (isIncomeBudget) {
@@ -188,6 +201,59 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
                             setDrawerOffset(-220);
                         }}
                     />
+                </View>
+
+                {/* Date */}
+                <View style={{ marginBottom: 12 }}>
+                    <Text
+                        style={{
+                            fontSize: 12,
+                            fontWeight: "600",
+                            color: colors.textSecondary,
+                            marginBottom: 6,
+                            letterSpacing: 0.5,
+                        }}
+                    >
+                        DATE
+                    </Text>
+                    <TouchableOpacity
+                        onPress={() => setShowDatePicker((prev) => !prev)}
+                        style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            backgroundColor: colors.surface,
+                            borderWidth: 1,
+                            borderColor: showDatePicker ? colors.accent : colors.border,
+                            borderRadius: 12,
+                            paddingHorizontal: 16,
+                            paddingVertical: 14,
+                            gap: 10,
+                        }}
+                    >
+                        <Text style={{ flex: 1, fontSize: 16, color: colors.textPrimary }}>
+                            {formatDate(selectedDate)}
+                        </Text>
+                        <Text style={{ fontSize: 13, color: colors.accent, fontWeight: "600" }}>
+                            {showDatePicker ? "Done" : "Change"}
+                        </Text>
+                    </TouchableOpacity>
+
+                    {showDatePicker && (
+                        <DateTimePicker
+                            value={selectedDate}
+                            mode="date"
+                            display={Platform.OS === "ios" ? "inline" : "default"}
+                            maximumDate={new Date()}
+                            onChange={(_event: DateTimePickerEvent, date?: Date) => {
+                                if (Platform.OS === "android") {
+                                    setShowDatePicker(false);
+                                }
+                                if (date) {
+                                    setSelectedDate(date);
+                                }
+                            }}
+                        />
+                    )}
                 </View>
 
                 {/* Save button */}
