@@ -25,3 +25,7 @@ export type BudgetPeriod = {
     order: number;
     createdAt?: Timestamp;
 };
+
+/** Payload shape used when editing a budget entry.
+ *  `date` is a Firestore Timestamp (not the display string from BudgetNode/BudgetPeriod). */
+export type BudgetUpdate = Omit<Partial<BudgetNode & BudgetPeriod>, 'date'> & { date?: Timestamp };
