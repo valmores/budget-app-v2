@@ -244,7 +244,8 @@ export default function ProfilePage() {
                         await clearCredentials();
                         setBiometricsEnabled(false);
                     } else {
-                        // enable logic
+                        setShowBiometricModal(false);
+                        setIsPasswordModalVisible(true); ``
                     }
 
                     setShowBiometricModal(false);

@@ -89,7 +89,7 @@ export default function BiometricActivationModal({
             <View
                 style={{
                     flex: 1,
-                    backgroundColor: 'red',
+                    backgroundColor: colors.background,
                     justifyContent: 'center',
                     alignItems: 'center',
                     padding: 20,
@@ -99,7 +99,7 @@ export default function BiometricActivationModal({
                     style={{
                         width: '100%',
                         maxWidth: 340,
-                        backgroundColor: 'red',
+                        backgroundColor: colors.surface,
                         borderRadius: 24,
                         padding: 24,
                         borderWidth: isDark ? 1 : 0,
