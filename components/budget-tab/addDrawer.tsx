@@ -1,8 +1,9 @@
-import { BudgetNode, BudgetPeriod } from "@/types/budget";
 import { useAuth } from "@/context/AuthContext";
+import { BudgetNode, BudgetPeriod } from "@/types/budget";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { Timestamp } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import { Keyboard, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Keyboard, Platform, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 interface AddDrawerProps {
     currentParent: BudgetNode | BudgetPeriod | null;
@@ -22,11 +23,16 @@ export default function AddDrawer({ currentParent, colors, setShowAddDrawer, onS
     const [activeInput, setActiveInput] = useState<"title" | "amount" | null>(null);
     const [title, setTitle] = useState("");
     const [amount, setAmount] = useState("");
+    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const formatDate = (date: Date) =>
+        date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
     const isRoot = currentParent === null;
-    const amountLabel = isRoot ? "Income amount" : "Spent amount";
+    const amountLabel = isRoot ? "Amount" : "Amount";
     const amountPlaceholder = isRoot ? "e.g. 10000" : "e.g. 500";
 
     useEffect(() => {
@@ -67,7 +73,7 @@ export default function AddDrawer({ currentParent, colors, setShowAddDrawer, onS
                 title: title.trim(),
                 amount: parsed,
                 added_by: user?.email ?? "unknown",
-                date: Timestamp.now(),
+                date: Timestamp.fromDate(selectedDate),
             });
             setShowAddDrawer(false);
         } catch (e: any) {
@@ -191,6 +197,52 @@ export default function AddDrawer({ currentParent, colors, setShowAddDrawer, onS
                             setDrawerOffset(-220);
                         }}
                     />
+                </View>
+
+                {/* Date */}
+                <View style={{ marginBottom: 12 }}>
+                    <Text style={{ fontSize: 11, fontWeight: "600", color: colors.accent, marginBottom: 6, letterSpacing: 0.5 }}>
+                        DATE
+                    </Text>
+                    <TouchableOpacity
+                        onPress={() => setShowDatePicker((prev) => !prev)}
+                        style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            backgroundColor: colors.surface,
+                            borderWidth: 1,
+                            borderColor: showDatePicker ? colors.accent : colors.border,
+                            borderRadius: 12,
+                            paddingHorizontal: 16,
+                            paddingVertical: 14,
+                            gap: 10,
+                        }}
+                    >
+                        {/* <Text style={{ fontSize: 18, color: colors.accent }}>📅</Text> */}
+                        <Text style={{ flex: 1, fontSize: 16, color: colors.textPrimary }}>
+                            {formatDate(selectedDate)}
+                        </Text>
+                        <Text style={{ fontSize: 13, color: colors.accent, fontWeight: "600" }}>
+                            {showDatePicker ? "Done" : "Change"}
+                        </Text>
+                    </TouchableOpacity>
+
+                    {showDatePicker && (
+                        <DateTimePicker
+                            value={selectedDate}
+                            mode="date"
+                            display={Platform.OS === "ios" ? "inline" : "default"}
+                            maximumDate={new Date()}
+                            onChange={(_event: DateTimePickerEvent, date?: Date) => {
+                                if (Platform.OS === "android") {
+                                    setShowDatePicker(false);
+                                }
+                                if (date) {
+                                    setSelectedDate(date);
+                                }
+                            }}
+                        />
+                    )}
                 </View>
 
                 {/* Save button */}
