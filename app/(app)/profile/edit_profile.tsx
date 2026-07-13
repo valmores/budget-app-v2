@@ -1,8 +1,11 @@
+import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
+    ActivityIndicator,
+    Alert,
     Keyboard,
     KeyboardAvoidingView,
     Platform,
@@ -19,11 +22,73 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function EditProfileScreen() {
     const { colors } = useTheme();
     const router = useRouter();
+    const { user, updateUserProfile, updateUserEmail, updateUserPassword } = useAuth();
 
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
+    // Pre-fill with current user data
+    const [name, setName] = useState(user?.displayName ?? '');
+    const [email, setEmail] = useState(user?.email ?? '');
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+
+    const [loading, setLoading] = useState(false);
+
+    const handleSave = async () => {
+        Keyboard.dismiss();
+
+        const nameChanged = name.trim() !== (user?.displayName ?? '').trim();
+        const emailChanged = email.trim() !== (user?.email ?? '').trim();
+        const passwordChanged = newPassword.trim().length > 0;
+
+        if (!nameChanged && !emailChanged && !passwordChanged) {
+            Alert.alert('No Changes', 'Nothing was changed.');
+            return;
+        }
+
+        // Email/password changes require the current password
+        if ((emailChanged || passwordChanged) && !currentPassword) {
+            Alert.alert('Password Required', 'Please enter your current password to update email or password.');
+            return;
+        }
+
+        if (passwordChanged && newPassword.length < 6) {
+            Alert.alert('Weak Password', 'New password must be at least 6 characters.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            if (nameChanged) {
+                await updateUserProfile(name.trim());
+            }
+            if (emailChanged) {
+                await updateUserEmail(email.trim(), currentPassword);
+            }
+            if (passwordChanged) {
+                await updateUserPassword(newPassword, currentPassword);
+            }
+
+            Alert.alert('Success', 'Your profile has been updated.', [
+                { text: 'OK', onPress: () => router.push('/(app)/profile/profile_page') },
+            ]);
+        } catch (err: any) {
+            const msg =
+                err?.code === 'auth/wrong-password'
+                    ? 'Current password is incorrect.'
+                    : err?.code === 'auth/email-already-in-use'
+                    ? 'That email is already in use.'
+                    : err?.code === 'auth/invalid-email'
+                    ? 'Please enter a valid email address.'
+                    : err?.code === 'auth/requires-recent-login'
+                    ? 'Session expired. Please sign in again.'
+                    : err?.message ?? 'Something went wrong. Please try again.';
+            Alert.alert('Error', msg);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -71,23 +136,13 @@ export default function EditProfileScreen() {
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
                     >
-                        {/* Name */}
+
+                        {/* Display Name */}
                         <View>
                             <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 8 }}>
                                 Display Name
                             </Text>
-                            <View
-                                style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    backgroundColor: colors.inputBackground,
-                                    borderWidth: 1.5,
-                                    borderColor: colors.inputBorder,
-                                    borderRadius: 14,
-                                    height: 52,
-                                    paddingHorizontal: 16,
-                                }}
-                            >
+                            <View style={fieldBox(colors)}>
                                 <Feather name="user" size={17} color={colors.textMuted} style={{ marginRight: 12 }} />
                                 <TextInput
                                     style={{ flex: 1, color: colors.inputText, fontSize: 15 }}
@@ -106,18 +161,7 @@ export default function EditProfileScreen() {
                             <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 8 }}>
                                 Email
                             </Text>
-                            <View
-                                style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    backgroundColor: colors.inputBackground,
-                                    borderWidth: 1.5,
-                                    borderColor: colors.inputBorder,
-                                    borderRadius: 14,
-                                    height: 52,
-                                    paddingHorizontal: 16,
-                                }}
-                            >
+                            <View style={fieldBox(colors)}>
                                 <Feather name="mail" size={17} color={colors.textMuted} style={{ marginRight: 12 }} />
                                 <TextInput
                                     style={{ flex: 1, color: colors.inputText, fontSize: 15 }}
@@ -132,47 +176,69 @@ export default function EditProfileScreen() {
                             </View>
                         </View>
 
-                        {/* Password */}
+                        {/* Divider */}
+                        <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 4 }} />
+
+                        {/* Current Password (needed to change email/password) */}
                         <View>
-                            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 8 }}>
-                                Password
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 4 }}>
+                                Current Password
                             </Text>
-                            <View
-                                style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    backgroundColor: colors.inputBackground,
-                                    borderWidth: 1.5,
-                                    borderColor: colors.inputBorder,
-                                    borderRadius: 14,
-                                    height: 52,
-                                    paddingHorizontal: 16,
-                                }}
-                            >
+                            <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 8 }}>
+                                Required only if you are changing your email or password.
+                            </Text>
+                            <View style={fieldBox(colors)}>
                                 <Feather name="lock" size={17} color={colors.textMuted} style={{ marginRight: 12 }} />
                                 <TextInput
                                     style={{ flex: 1, color: colors.inputText, fontSize: 15 }}
-                                    placeholder="Enter new password"
+                                    placeholder="Enter current password"
                                     placeholderTextColor={colors.inputPlaceholder}
-                                    value={password}
-                                    onChangeText={setPassword}
-                                    secureTextEntry={!showPassword}
+                                    value={currentPassword}
+                                    onChangeText={setCurrentPassword}
+                                    secureTextEntry={!showCurrentPassword}
                                     autoCapitalize="none"
                                     autoCorrect={false}
                                 />
                                 <TouchableOpacity
-                                    onPress={() => setShowPassword((p) => !p)}
+                                    onPress={() => setShowCurrentPassword(p => !p)}
                                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                                 >
-                                    <Feather name={showPassword ? 'eye' : 'eye-off'} size={17} color={colors.textMuted} />
+                                    <Feather name={showCurrentPassword ? 'eye' : 'eye-off'} size={17} color={colors.textMuted} />
                                 </TouchableOpacity>
                             </View>
                         </View>
 
-                        {/* Save button */}
+                        {/* New Password */}
+                        <View>
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 8 }}>
+                                New Password
+                            </Text>
+                            <View style={fieldBox(colors)}>
+                                <Feather name="lock" size={17} color={colors.textMuted} style={{ marginRight: 12 }} />
+                                <TextInput
+                                    style={{ flex: 1, color: colors.inputText, fontSize: 15 }}
+                                    placeholder="Leave blank to keep current"
+                                    placeholderTextColor={colors.inputPlaceholder}
+                                    value={newPassword}
+                                    onChangeText={setNewPassword}
+                                    secureTextEntry={!showNewPassword}
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                />
+                                <TouchableOpacity
+                                    onPress={() => setShowNewPassword(p => !p)}
+                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                >
+                                    <Feather name={showNewPassword ? 'eye' : 'eye-off'} size={17} color={colors.textMuted} />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        {/* Save */}
                         <TouchableOpacity
                             activeOpacity={0.85}
-                            onPress={() => { }}
+                            onPress={handleSave}
+                            disabled={loading}
                             style={{
                                 backgroundColor: colors.accent,
                                 borderRadius: 14,
@@ -180,11 +246,16 @@ export default function EditProfileScreen() {
                                 justifyContent: 'center',
                                 alignItems: 'center',
                                 marginTop: 8,
+                                opacity: loading ? 0.7 : 1,
                             }}
                         >
-                            <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700', letterSpacing: 0.2 }}>
-                                Save Changes
-                            </Text>
+                            {loading ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
+                                <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700', letterSpacing: 0.2 }}>
+                                    Save Changes
+                                </Text>
+                            )}
                         </TouchableOpacity>
 
                     </ScrollView>
@@ -193,4 +264,19 @@ export default function EditProfileScreen() {
 
         </SafeAreaView>
     );
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function fieldBox(colors: any) {
+    return {
+        flexDirection: 'row' as const,
+        alignItems: 'center' as const,
+        backgroundColor: colors.inputBackground,
+        borderWidth: 1.5,
+        borderColor: colors.inputBorder,
+        borderRadius: 14,
+        height: 52,
+        paddingHorizontal: 16,
+    };
 }

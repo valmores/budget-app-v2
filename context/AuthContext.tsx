@@ -5,6 +5,8 @@ import {
     signInWithEmailAndPassword,
     signOut as firebaseSignOut,
     updateProfile,
+    updateEmail,
+    updatePassword,
     User,
     EmailAuthProvider,
     reauthenticateWithCredential,
@@ -32,6 +34,9 @@ type AuthContextValue = {
     transientPassword: string | null;
     clearTransientCredentials: () => void;
     verifyPassword: (password: string) => Promise<void>;
+    updateUserProfile: (displayName: string) => Promise<void>;
+    updateUserEmail: (newEmail: string, currentPassword: string) => Promise<void>;
+    updateUserPassword: (newPassword: string, currentPassword: string) => Promise<void>;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -107,6 +112,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         transientPasswordRef.current = password;
     };
 
+    const updateUserProfile = async (displayName: string) => {
+        if (!auth.currentUser) throw new Error('No user is currently logged in.');
+        await updateProfile(auth.currentUser, { displayName });
+        await auth.currentUser.reload();
+        setUser({ ...auth.currentUser });
+    };
+
+    const updateUserEmail = async (newEmail: string, currentPassword: string) => {
+        if (!auth.currentUser || !auth.currentUser.email) throw new Error('No user is currently logged in.');
+        const credential = EmailAuthProvider.credential(auth.currentUser.email, currentPassword);
+        await reauthenticateWithCredential(auth.currentUser, credential);
+        await updateEmail(auth.currentUser, newEmail);
+        await auth.currentUser.reload();
+        transientEmailRef.current = newEmail;
+        setUser({ ...auth.currentUser });
+    };
+
+    const updateUserPassword = async (newPassword: string, currentPassword: string) => {
+        if (!auth.currentUser || !auth.currentUser.email) throw new Error('No user is currently logged in.');
+        const credential = EmailAuthProvider.credential(auth.currentUser.email, currentPassword);
+        await reauthenticateWithCredential(auth.currentUser, credential);
+        await updatePassword(auth.currentUser, newPassword);
+        transientPasswordRef.current = newPassword;
+    };
+
     return (
         <AuthContext.Provider
             value={{
@@ -119,6 +149,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 transientPassword: transientPasswordRef.current,
                 clearTransientCredentials,
                 verifyPassword,
+                updateUserProfile,
+                updateUserEmail,
+                updateUserPassword,
             }}
         >
             {children}
