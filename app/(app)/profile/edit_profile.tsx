@@ -35,6 +35,11 @@ export default function EditProfileScreen() {
 
     const [loading, setLoading] = useState(false);
 
+    const hasChanges =
+        name.trim() !== (user?.displayName ?? '').trim() ||
+        email.trim() !== (user?.email ?? '').trim() ||
+        newPassword.trim().length > 0;
+
     const handleSave = async () => {
         Keyboard.dismiss();
 
@@ -78,12 +83,12 @@ export default function EditProfileScreen() {
                 err?.code === 'auth/wrong-password'
                     ? 'Current password is incorrect.'
                     : err?.code === 'auth/email-already-in-use'
-                    ? 'That email is already in use.'
-                    : err?.code === 'auth/invalid-email'
-                    ? 'Please enter a valid email address.'
-                    : err?.code === 'auth/requires-recent-login'
-                    ? 'Session expired. Please sign in again.'
-                    : err?.message ?? 'Something went wrong. Please try again.';
+                        ? 'That email is already in use.'
+                        : err?.code === 'auth/invalid-email'
+                            ? 'Please enter a valid email address.'
+                            : err?.code === 'auth/requires-recent-login'
+                                ? 'Session expired. Please sign in again.'
+                                : err?.message ?? 'Something went wrong. Please try again.';
             Alert.alert('Error', msg);
         } finally {
             setLoading(false);
@@ -238,9 +243,9 @@ export default function EditProfileScreen() {
                         <TouchableOpacity
                             activeOpacity={0.85}
                             onPress={handleSave}
-                            disabled={loading}
+                            disabled={loading || !hasChanges}
                             style={{
-                                backgroundColor: colors.accent,
+                                backgroundColor: !hasChanges ? colors.accentSubtle : colors.accent,
                                 borderRadius: 14,
                                 height: 52,
                                 justifyContent: 'center',
@@ -252,7 +257,7 @@ export default function EditProfileScreen() {
                             {loading ? (
                                 <ActivityIndicator color="#fff" />
                             ) : (
-                                <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700', letterSpacing: 0.2 }}>
+                                <Text style={{ color: !hasChanges ? colors.textMuted : colors.textPrimary, fontSize: 15, fontWeight: '700', letterSpacing: 0.2 }}>
                                     Save Changes
                                 </Text>
                             )}
