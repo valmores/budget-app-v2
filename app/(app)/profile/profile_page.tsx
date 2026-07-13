@@ -9,6 +9,7 @@ import {
     isBiometricsSupported
 } from '@/lib/biometrics';
 import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
     Pressable,
@@ -21,6 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function ProfilePage() {
     const { colors, isDark } = useTheme();
     const { user, signOut, transientEmail, transientPassword } = useAuth();
+    const router = useRouter();
     const [disableFingerprint, setDisableFingerprint] = useState(false);
     const [fingerprintEnabled, setFingerprintEnabled] = useState(false)
     const [biometricsSupported, setBiometricsSupported] = useState(false);
@@ -152,7 +154,9 @@ export default function ProfilePage() {
                         <Pressable
                             key={item.id}
                             onPress={async () => {
-                                if (item.id === 'sign-out') {
+                                if (item.id === 'edit-profile') {
+                                    router.push('/(app)/profile/edit_profile');
+                                } else if (item.id === 'sign-out') {
                                     await signOut();
                                 } else if (item.id === 'biometrics') {
                                     await handleToggleBiometrics();
