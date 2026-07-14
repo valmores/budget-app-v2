@@ -1,5 +1,6 @@
 import CustomModal from '@/components/auth/BioNotEnabled';
 import BiometricActivationModal from '@/components/profile/BiometricActivationModal';
+import SignOutModal from '@/components/profile/SignOutModal';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import {
@@ -30,6 +31,7 @@ export default function ProfilePage() {
     const [biometricsLabel, setBiometricsLabel] = useState('Biometric');
     const [showBiometricModal, setShowBiometricModal] = useState(false);
     const [modalMode, setModalMode] = useState<'enable' | 'disable'>('enable');
+    const [showSignOutModal, setShowSignOutModal] = useState(false);
 
 
     // Password confirmation modal state
@@ -157,7 +159,7 @@ export default function ProfilePage() {
                                 if (item.id === 'edit-profile') {
                                     router.push('/(app)/profile/edit_profile');
                                 } else if (item.id === 'sign-out') {
-                                    await signOut();
+                                    setShowSignOutModal(true);
                                 } else if (item.id === 'biometrics') {
                                     await handleToggleBiometrics();
                                 }
@@ -255,6 +257,17 @@ export default function ProfilePage() {
                     setShowBiometricModal(false);
                 }}
                 onCancel={() => setShowBiometricModal(false)}
+            />
+
+            {/* Sign Out Modal */}
+            <SignOutModal
+                visible={showSignOutModal}
+                colors={colors}
+                onClose={() => setShowSignOutModal(false)}
+                onConfirm={async () => {
+                    setShowSignOutModal(false);
+                    await signOut();
+                }}
             />
 
         </SafeAreaView>
