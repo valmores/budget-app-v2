@@ -1,11 +1,11 @@
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import AlertModal, { AlertButton, AlertVariant } from '@/components/common/AlertModal';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     Keyboard,
     KeyboardAvoidingView,
     Platform,
@@ -35,6 +35,29 @@ export default function EditProfileScreen() {
 
     const [loading, setLoading] = useState(false);
 
+    // ── Alert state ──────────────────────────────────────────────────────────
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertConfig, setAlertConfig] = useState<{
+        title: string;
+        message: string;
+        variant: AlertVariant;
+        buttons?: AlertButton[];
+    }>({
+        title: '',
+        message: '',
+        variant: 'info',
+    });
+
+    const showAlert = (
+        title: string,
+        message: string,
+        variant: AlertVariant = 'info',
+        buttons?: AlertButton[],
+    ) => {
+        setAlertConfig({ title, message, variant, buttons });
+        setAlertVisible(true);
+    };
+
     const hasChanges =
         name.trim() !== (user?.displayName ?? '').trim() ||
         email.trim() !== (user?.email ?? '').trim() ||
@@ -48,18 +71,18 @@ export default function EditProfileScreen() {
         const passwordChanged = newPassword.trim().length > 0;
 
         if (!nameChanged && !emailChanged && !passwordChanged) {
-            Alert.alert('No Changes', 'Nothing was changed.');
+            showAlert('No Changes', 'Nothing was changed.', 'info');
             return;
         }
 
         // Email/password changes require the current password
         if ((emailChanged || passwordChanged) && !currentPassword) {
-            Alert.alert('Password Required', 'Please enter your current password to update email or password.');
+            showAlert('Password Required', 'Please enter your current password to update email or password.', 'warning');
             return;
         }
 
         if (passwordChanged && newPassword.length < 6) {
-            Alert.alert('Weak Password', 'New password must be at least 6 characters.');
+            showAlert('Weak Password', 'New password must be at least 6 characters.', 'warning');
             return;
         }
 
@@ -75,7 +98,7 @@ export default function EditProfileScreen() {
                 await updateUserPassword(newPassword, currentPassword);
             }
 
-            Alert.alert('Success', 'Your profile has been updated.', [
+            showAlert('Success', 'Your profile has been updated.', 'success', [
                 { text: 'OK', onPress: () => router.push('/(app)/profile/profile_page') },
             ]);
         } catch (err: any) {
@@ -89,7 +112,7 @@ export default function EditProfileScreen() {
                             : err?.code === 'auth/requires-recent-login'
                                 ? 'Session expired. Please sign in again.'
                                 : err?.message ?? 'Something went wrong. Please try again.';
-            Alert.alert('Error', msg);
+            showAlert('Error', msg, 'error');
         } finally {
             setLoading(false);
         }
@@ -97,6 +120,15 @@ export default function EditProfileScreen() {
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+
+            <AlertModal
+                visible={alertVisible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                variant={alertConfig.variant}
+                buttons={alertConfig.buttons}
+                onClose={() => setAlertVisible(false)}
+            />
 
             {/* Header */}
             <View
