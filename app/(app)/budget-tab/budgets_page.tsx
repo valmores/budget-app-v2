@@ -9,8 +9,8 @@ import { formatTimestamp, useBudgets } from "@/hooks/useBudgets";
 import { BudgetNode, BudgetPeriod, BudgetUpdate } from "@/types/budget";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { Timestamp } from "firebase/firestore";
-import { useEffect, useState } from "react";
-import { BackHandler, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Animated, BackHandler, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function BudgetsScreen() {
@@ -18,6 +18,21 @@ export default function BudgetsScreen() {
     const [navStack, setNavStack] = useState<(BudgetNode | BudgetPeriod)[]>([]);
     const [showAddDrawer, setShowAddDrawer] = useState(false);
     const [editTarget, setEditTarget] = useState<BudgetNode | BudgetPeriod | null>(null);
+    const [showSearch, setShowSearch] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const searchAnim = useRef(new Animated.Value(0)).current;
+
+    const toggleSearch = () => {
+        const toValue = showSearch ? 0 : 1;
+        setShowSearch(!showSearch);
+        Animated.timing(searchAnim, {
+            toValue,
+            duration: 220,
+            useNativeDriver: false,
+        }).start(() => {
+            if (showSearch) setSearchQuery("");
+        });
+    };
 
     const { budgets, loading, error, refreshing, refresh, addBudgetPeriod, addBudgetNode, updateBudget, deleteBudget } =
         useBudgets();
@@ -228,12 +243,86 @@ export default function BudgetsScreen() {
                     hasIncome={isRoot}
                 />
             </View>
-            {/* Breadcrumbs Section */}
-            <Breadcrumbs
-                navStack={navStack}
-                onBack={handleBack}
-                sectionLabel={sectionLabel}
-            />
+            {/* Breadcrumbs + Collapsible Search */}
+            <View
+                style={{
+                    backgroundColor: colors.surface,
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border,
+                }}
+            >
+                {/* Breadcrumbs row with search toggle */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingRight: 12 }}>
+                    <View style={{ flex: 1 }}>
+                        <Breadcrumbs
+                            navStack={navStack}
+                            onBack={handleBack}
+                            sectionLabel={sectionLabel}
+                        />
+                    </View>
+                    <TouchableOpacity
+                        onPress={toggleSearch}
+                        activeOpacity={0.7}
+                        style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 10,
+                            backgroundColor: showSearch ? colors.accent + '20' : colors.inputBackground,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                        }}
+                    >
+                        <Ionicons
+                            name={showSearch ? 'close' : 'search'}
+                            size={16}
+                            color={showSearch ? colors.accent : colors.textMuted}
+                        />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Animated collapsible search bar */}
+                <Animated.View
+                    style={{
+                        overflow: 'hidden',
+                        height: searchAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0, 44],
+                        }),
+                        opacity: searchAnim,
+                    }}
+                >
+                    <View
+                        style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            marginHorizontal: 12,
+                            marginBottom: 8,
+                            paddingHorizontal: 10,
+                            paddingVertical: 8,
+                            backgroundColor: colors.inputBackground,
+                            borderRadius: 10,
+                            borderWidth: 1,
+                            borderColor: colors.inputBorder,
+                            gap: 6,
+                        }}
+                    >
+                        <Ionicons name="search" size={14} color={colors.textMuted} />
+                        <TextInput
+                            placeholder="Search budgets..."
+                            placeholderTextColor={colors.inputPlaceholder}
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            style={{
+                                flex: 1,
+                                fontSize: 13,
+                                color: colors.inputText,
+                                paddingVertical: 0,
+                            }}
+                            autoFocus={showSearch}
+                        />
+                    </View>
+                </Animated.View>
+            </View>
 
             {/* CONTENT */}
             <ScrollView
