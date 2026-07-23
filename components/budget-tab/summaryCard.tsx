@@ -18,119 +18,88 @@ type BudgetListCardProps = {
     hasIncome: boolean;
 };
 
-export default function SummaryCard({ title, spent, date, added_by, subBudgets = [], onPress, showPercentage = false, income, hasIncome, headerSpent, headerLimit, headerPercentage }: BudgetListCardProps) {
+export default function SummaryCard({
+    title,
+    date,
+    added_by,
+    hasIncome,
+    headerSpent,
+    headerLimit,
+    headerPercentage,
+}: BudgetListCardProps) {
     const { colors } = useTheme();
-    // const hasSubBudgets = subBudgets.length > 0;
-    // const calculateTotalSpent = (nodes: BudgetNode[]): number => {
-    //     return nodes.reduce((sum, node) => {
-    //         const hasSub = node.subBudgets && node.subBudgets.length > 0;
-    //         return sum + (hasSub ? calculateTotalSpent(node.subBudgets) : (node.spent ?? 0));
-    //     }, 0);
-    // };
-    // const displaySpent = (hasSubBudgets ? calculateTotalSpent(subBudgets) : spent) ?? 0;
 
-    // const percentage =
-    //     showPercentage && income
-    //         ? Math.min((displaySpent / income) * 100, 100)
-    //         : null;
+    const remaining = headerLimit - headerSpent;
+    const isOverBudget = remaining < 0;
+    const progressWidth = Math.min(headerPercentage, 100);
 
-    // const progressColor =
-    //     percentage === null
-    //         ? colors.textSecondary
-    //         : percentage >= 80
-    //             ? colors.warning
-    //             : colors.accent;
     return (
         <View
             style={{
                 backgroundColor: colors.accent,
                 borderRadius: 16,
-                padding: 18,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                overflow: 'hidden',
             }}
         >
-            <View
-                style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "flex-end",
-                    marginBottom: hasIncome ? 14 : 0,
-                }}
-            >
-                <View>
-                    <Text
-                        style={{
-                            fontSize: 12,
-                            color: "rgba(255,255,255,0.75)",
-                            letterSpacing: 0.5,
-                            textTransform: "uppercase",
-                            marginBottom: 4,
-                        }}
-                    >
+
+            {/* Row 1: Title + Main Amount */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <View style={{ alignItems: 'flex-start' }}>
+                    <Text style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 1 }}>
                         Total Spent
                     </Text>
-                    <Text
-                        style={{
-                            fontSize: 28,
-                            fontWeight: "800",
-                            color: "#fff",
-                            letterSpacing: -0.5,
-                        }}
-                    >
-                        ₱{headerSpent.toLocaleString()}
+                    <Text style={{ fontSize: 22, fontWeight: '800', color: '#fff', letterSpacing: -0.5 }}>
+                        {'\u20B1'}{headerSpent.toLocaleString()}
                     </Text>
                 </View>
+
                 {hasIncome && (
-                    <View style={{ alignItems: "flex-end" }}>
-                        <Text
-                            style={{
-                                fontSize: 12,
-                                color: "rgba(255,255,255,0.75)",
-                                letterSpacing: 0.5,
-                                textTransform: "uppercase",
-                                marginBottom: 4,
-                            }}
-                        >
-                            Total Budget
-                        </Text>
-                        <Text
-                            style={{
-                                fontSize: 20,
-                                fontWeight: "700",
-                                color: "rgba(255,255,255,0.9)",
-                            }}
-                        >
-                            ₱{headerLimit.toLocaleString()}
-                        </Text>
+                    <View>
+                        {/* Row 2: Stat chips + percentage badge */}
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                            {/* Budget chip */}
+                            <View style={{ backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 8, paddingVertical: 4, paddingHorizontal: 8 }}>
+                                <Text style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 1 }}>Budget</Text>
+                                <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>{'\u20B1'}{headerLimit.toLocaleString()}</Text>
+                            </View>
+
+                            {/* Remaining / Over chip */}
+                            <View style={{
+                                backgroundColor: isOverBudget ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.15)',
+                                borderRadius: 8,
+                                paddingVertical: 4,
+                                paddingHorizontal: 8,
+                                borderWidth: isOverBudget ? 1 : 0,
+                                borderColor: 'rgba(255,255,255,0.3)',
+                            }}>
+                                <Text style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 1 }}>
+                                    {isOverBudget ? 'Over' : 'Left'}
+                                </Text>
+                                <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>
+                                    {isOverBudget ? '-' : ''}{'\u20B1'}{Math.abs(remaining).toLocaleString()}
+                                </Text>
+                            </View>
+
+                            <View style={{ flex: 1 }} />
+
+                            {/* Percentage badge */}
+
+                        </View>
                     </View>
                 )}
             </View>
 
-            {hasIncome && (
-                <>
-                    {/* Overall Progress Bar */}
-                    <View
-                        style={{
-                            height: 4,
-                            backgroundColor: "rgba(255,255,255,0.25)",
-                            borderRadius: 2,
-                            overflow: "hidden",
-                            marginBottom: 8,
-                        }}
-                    >
-                        <View
-                            style={{
-                                width: `${Math.min(headerPercentage, 100)}%`,
-                                height: "100%",
-                                backgroundColor: "#fff",
-                                borderRadius: 2,
-                            }}
-                        />
-                    </View>
-                    <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>
-                        {headerPercentage}% of budget used
-                    </Text>
-                </>
-            )}
+            {/* Row 3: Progress bar */}
+            <View style={{ display: 'flex', flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                <View style={{ flex: 1, height: 3, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 2, overflow: 'hidden', marginBottom: 6 }}>
+                    <View style={{ width: `${progressWidth}%`, height: '100%', backgroundColor: '#fff', borderRadius: 2 }} />
+                </View>
+                <View style={{ backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 8, paddingVertical: 4, paddingHorizontal: 8, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>{headerPercentage}%</Text>
+                </View>
+            </View>
         </View>
-    )
+    );
 }
