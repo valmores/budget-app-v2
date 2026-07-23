@@ -62,6 +62,24 @@ export default function BudgetsScreen() {
     const activeList = liveCurrentParent ? liveCurrentParent.subBudgets : budgets;
     const isRoot = currentParentId === null;
 
+    function matchesSearch(node: BudgetNode | BudgetPeriod, query: string): boolean {
+        if (!query) return true;
+        const q = query.trim().toLowerCase();
+        if (!q) return true;
+        const titleMatch = node.title?.toLowerCase().includes(q);
+        const addedByMatch = node.added_by?.toLowerCase().includes(q);
+        const dateMatch = node.date?.toLowerCase().includes(q);
+        if (titleMatch || addedByMatch || dateMatch) return true;
+        if (node.subBudgets && node.subBudgets.length > 0) {
+            return node.subBudgets.some((child) => matchesSearch(child, q));
+        }
+        return false;
+    }
+
+    const filteredList = (activeList ?? []).filter((budget) =>
+        matchesSearch(budget, searchQuery)
+    );
+
     const totalSpent = budgets.reduce(
         (sum, b) => sum + getTotalSpent(b.subBudgets),
         0
@@ -320,6 +338,15 @@ export default function BudgetsScreen() {
                             }}
                             autoFocus={showSearch}
                         />
+                        {searchQuery.length > 0 && (
+                            <TouchableOpacity
+                                onPress={() => setSearchQuery('')}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+                            </TouchableOpacity>
+                        )}
                     </View>
                 </Animated.View>
             </View>
@@ -329,6 +356,7 @@ export default function BudgetsScreen() {
                 style={{ flex: 1 }}
                 contentContainerStyle={{
                     paddingHorizontal: 16,
+                    paddingBottom: 24,
                 }}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
@@ -342,7 +370,7 @@ export default function BudgetsScreen() {
                 }
             >
 
-                {activeList?.map((budget) => (
+                {filteredList.map((budget) => (
                     <BudgetListCard
                         key={budget.id}
                         title={budget.title}
@@ -358,6 +386,33 @@ export default function BudgetsScreen() {
                         onAddSubBudget={() => handleAddSubBudget(budget)}
                     />
                 ))}
+
+                {filteredList.length === 0 && searchQuery.trim().length > 0 && (
+                    <View style={{ alignItems: 'center', justifyContent: 'center', paddingTop: 60, paddingHorizontal: 24 }}>
+                        <Ionicons name="search-outline" size={44} color={colors.textMuted} />
+                        <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '700', marginTop: 14, textAlign: 'center' }}>
+                            No budgets found
+                        </Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 4, textAlign: 'center' }}>
+                            {`No budgets match "${searchQuery}"`}
+                        </Text>
+                        <TouchableOpacity
+                            onPress={() => setSearchQuery('')}
+                            activeOpacity={0.7}
+                            style={{
+                                marginTop: 16,
+                                paddingVertical: 8,
+                                paddingHorizontal: 16,
+                                backgroundColor: colors.inputBackground,
+                                borderRadius: 8,
+                                borderWidth: 1,
+                                borderColor: colors.inputBorder,
+                            }}
+                        >
+                            <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>Clear Search</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
             </ScrollView>
 
             {/* FLOATING ACTION BUTTON */}
