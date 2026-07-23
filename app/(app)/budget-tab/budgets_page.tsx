@@ -78,7 +78,7 @@ export default function BudgetsScreen() {
 
     const filteredList = (activeList ?? []).filter((budget) =>
         matchesSearch(budget, searchQuery)
-    );
+    ).sort((a, b) => b.dateMs - a.dateMs);
 
     const totalSpent = budgets.reduce(
         (sum, b) => sum + getTotalSpent(b.subBudgets),
@@ -161,7 +161,12 @@ export default function BudgetsScreen() {
             prev.map((item) => {
                 if (item.id !== editTarget.id) return item;
                 const { date, ...rest } = updated;
-                return { ...item, ...rest, date: date ? formatTimestamp(date) : item.date } as BudgetNode | BudgetPeriod;
+                return {
+                    ...item,
+                    ...rest,
+                    date: date ? formatTimestamp(date) : item.date,
+                    dateMs: date ? date.toMillis() : item.dateMs,
+                } as BudgetNode | BudgetPeriod;
             })
         );
         setEditTarget(null);

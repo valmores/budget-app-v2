@@ -96,11 +96,13 @@ export function useBudgets() {
             (snap) => {
                 const periods: BudgetPeriod[] = snap.docs.map((d) => {
                     const data = d.data();
+                    const ts: Timestamp | undefined = data.date;
                     return {
                         id: d.id,
                         title: data.title,
                         income: data.income,
                         date: formatTimestamp(data.date),
+                        dateMs: ts instanceof Timestamp ? ts.toMillis() : 0,
                         added_by: data.added_by,
                         order: data.order ?? 0,
                         createdAt: data.createdAt,
@@ -136,11 +138,13 @@ export function useBudgets() {
             (snap) => {
                 const nodes: BudgetNode[] = snap.docs.map((d) => {
                     const data = d.data();
+                    const ts: Timestamp | undefined = data.date;
                     return {
                         id: d.id,
                         title: data.title,
                         spent: data.spent,
                         date: formatTimestamp(data.date),
+                        dateMs: ts instanceof Timestamp ? ts.toMillis() : 0,
                         added_by: data.added_by,
                         periodId: data.periodId,
                         parentId: data.parentId ?? null,
