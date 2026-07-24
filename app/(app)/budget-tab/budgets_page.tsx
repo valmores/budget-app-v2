@@ -272,6 +272,7 @@ export default function BudgetsScreen() {
                     backgroundColor: colors.surface,
                     borderBottomWidth: 1,
                     borderBottomColor: colors.border,
+                    marginBottom: 10
                 }}
             >
                 {/* Breadcrumbs row with search toggle */}
@@ -287,8 +288,8 @@ export default function BudgetsScreen() {
                         onPress={toggleSearch}
                         activeOpacity={0.7}
                         style={{
-                            width: 32,
-                            height: 32,
+                            width: 27,
+                            height: 27,
                             borderRadius: 10,
                             backgroundColor: showSearch ? colors.accent + '20' : colors.inputBackground,
                             justifyContent: 'center',
