@@ -265,7 +265,7 @@ export default function BudgetListCard({
                                     style={{
                                         flexDirection: "row",
                                         alignItems: "center",
-                                        marginBottom: 14,
+                                        marginBottom: 8,
                                     }}
                                 >
                                     {/* Initials avatar */}
@@ -275,7 +275,7 @@ export default function BudgetListCard({
                                     <View style={{ flex: 1 }}>
                                         <Text
                                             style={{
-                                                fontSize: 16,
+                                                fontSize: 15,
                                                 fontWeight: "700",
                                                 color: colors.textPrimary,
                                                 letterSpacing: -0.3,
@@ -324,13 +324,13 @@ export default function BudgetListCard({
                                     style={{
                                         flexDirection: "row",
                                         alignItems: "baseline",
-                                        marginBottom: 12,
+                                        marginBottom: 10,
                                         gap: 6,
                                     }}
                                 >
                                     <Text
                                         style={{
-                                            fontSize: 26,
+                                            fontSize: 16,
                                             fontWeight: "800",
                                             color: colors.textPrimary,
                                             letterSpacing: -0.8,
@@ -378,7 +378,7 @@ export default function BudgetListCard({
                                     <View style={{ marginBottom: 14 }}>
                                         <View
                                             style={{
-                                                height: 7,
+                                                height: 3,
                                                 backgroundColor: isDark
                                                     ? "rgba(255,255,255,0.1)"
                                                     : "rgba(0,0,0,0.06)",
