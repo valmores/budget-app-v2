@@ -3,6 +3,7 @@ import Breadcrumbs from "@/components/budget-tab/Breadcrumbs";
 import BudgetListCard from "@/components/budget-tab/BudgetListCard";
 import BudgetSkeleton from "@/components/budget-tab/BudgetSkeleton";
 import EditDrawer from "@/components/budget-tab/EditDrawer";
+import PasteConfirmModal from "@/components/budget-tab/PasteConfirmModal";
 import SummaryCard from "@/components/budget-tab/SummaryCard";
 import { useTheme } from "@/context/ThemeContext";
 import { formatTimestamp, useBudgets } from "@/hooks/useBudgets";
@@ -18,6 +19,8 @@ export default function BudgetsScreen() {
     const [navStack, setNavStack] = useState<(BudgetNode | BudgetPeriod)[]>([]);
     const [showAddDrawer, setShowAddDrawer] = useState(false);
     const [editTarget, setEditTarget] = useState<BudgetNode | BudgetPeriod | null>(null);
+    const [copiedNode, setCopiedNode] = useState<BudgetNode | null>(null);
+    const [pasteTarget, setPasteTarget] = useState<BudgetNode | BudgetPeriod | null>(null);
     const [showSearch, setShowSearch] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const searchAnim = useRef(new Animated.Value(0)).current;
@@ -139,6 +142,26 @@ export default function BudgetsScreen() {
 
     const handleEdit = (budget: BudgetNode | BudgetPeriod) => {
         setEditTarget(budget);
+    };
+
+    const handleCardLongPress = (budget: BudgetNode | BudgetPeriod) => {
+        if (!copiedNode) {
+            // First long-press: copy this sub-budget item
+            if (!('income' in budget)) {
+                setCopiedNode(budget as BudgetNode);
+            }
+        } else {
+            // Second long-press: target card to paste into
+            setPasteTarget(budget);
+        }
+    };
+
+    const handleConfirmPaste = () => {
+        if (copiedNode && pasteTarget) {
+            console.log(`[UI Preview] Pasted "${copiedNode.title}" into "${pasteTarget.title}"`);
+        }
+        setPasteTarget(null);
+        setCopiedNode(null);
     };
 
     const handleSaveEdit = async (updated: BudgetUpdate) => {
@@ -390,6 +413,7 @@ export default function BudgetsScreen() {
                         onEdit={() => handleEdit(budget)}
                         onDelete={() => handleDelete(budget)}
                         onAddSubBudget={() => handleAddSubBudget(budget)}
+                        onMove={() => handleCardLongPress(budget)}
                     />
                 ))}
 
@@ -465,6 +489,64 @@ export default function BudgetsScreen() {
                     }}
                     onClose={() => setEditTarget(null)}
                     onSave={handleSaveEdit}
+                />
+            )}
+
+            {/* Floating Banner when an item is copied */}
+            {copiedNode && (
+                <View
+                    style={{
+                        position: "absolute",
+                        bottom: 96,
+                        left: 20,
+                        right: 20,
+                        backgroundColor: colors.accent,
+                        borderRadius: 16,
+                        paddingVertical: 12,
+                        paddingHorizontal: 16,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        elevation: 8,
+                        shadowColor: "#000",
+                        shadowOpacity: 0.25,
+                        shadowRadius: 10,
+                        shadowOffset: { width: 0, height: 4 },
+                    }}
+                >
+                    <View style={{ flex: 1, marginRight: 10 }}>
+                        <Text style={{ color: "#fff", fontSize: 13, fontWeight: "700" }} numberOfLines={1}>
+                            Copied "{copiedNode.title}"
+                        </Text>
+                        <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 11, marginTop: 1 }}>
+                            Long-press target card to paste item
+                        </Text>
+                    </View>
+                    <TouchableOpacity
+                        onPress={() => setCopiedNode(null)}
+                        activeOpacity={0.7}
+                        style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 14,
+                            backgroundColor: "rgba(255,255,255,0.2)",
+                            justifyContent: "center",
+                            alignItems: "center",
+                        }}
+                    >
+                        <Ionicons name="close" size={16} color="#fff" />
+                    </TouchableOpacity>
+                </View>
+            )}
+
+            {/* Paste Confirmation Modal */}
+            {copiedNode && pasteTarget && (
+                <PasteConfirmModal
+                    visible={true}
+                    sourceTitle={copiedNode.title}
+                    targetTitle={pasteTarget.title}
+                    onConfirm={handleConfirmPaste}
+                    onCancel={() => setPasteTarget(null)}
                 />
             )}
         </SafeAreaView>
