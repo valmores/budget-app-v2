@@ -25,6 +25,7 @@ type BudgetListCardProps = {
     onEdit?: () => void;
     onDelete?: () => void;
     onAddSubBudget?: () => void;
+    onMove?: () => void;
 };
 
 const calculateTotalSpent = (nodes: BudgetNode[]): number => {
@@ -50,6 +51,7 @@ export default function BudgetListCard({
     onEdit,
     onDelete,
     onAddSubBudget,
+    onMove,
 }: BudgetListCardProps) {
     const { colors, isDark } = useTheme();
     const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
@@ -243,6 +245,8 @@ export default function BudgetListCard({
                         <TouchableOpacity
                             activeOpacity={hasSubBudgets ? 0.75 : 1}
                             onPress={hasSubBudgets ? onPress : undefined}
+                            onLongPress={onMove}
+                            delayLongPress={350}
                             style={{
                                 backgroundColor: colors.surface,
                                 borderRadius: 18,
