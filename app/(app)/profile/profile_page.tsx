@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
     Pressable,
+    Switch,
     Text,
     View
 } from 'react-native';
@@ -21,7 +22,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfilePage() {
-    const { colors, isDark } = useTheme();
+    const { colors, isDark, toggleTheme } = useTheme();
     const { user, signOut, transientEmail, transientPassword } = useAuth();
     const router = useRouter();
     const [disableFingerprint, setDisableFingerprint] = useState(false);
@@ -162,6 +163,8 @@ export default function ProfilePage() {
                                     setShowSignOutModal(true);
                                 } else if (item.id === 'biometrics') {
                                     await handleToggleBiometrics();
+                                } else if (item.id === 'dark-mode') {
+                                    toggleTheme();
                                 }
                             }}
                         >
@@ -212,7 +215,17 @@ export default function ProfilePage() {
                                 >
                                     {item.label}
                                 </Text>
-                                <Feather name="chevron-right" size={16} color={colors.textMuted} />
+                                {item.id === 'dark-mode' ? (
+                                        <Switch
+                                            value={isDark}
+                                            onValueChange={toggleTheme}
+                                            trackColor={{ false: colors.border, true: colors.accent }}
+                                            thumbColor={isDark ? '#fff' : '#fff'}
+                                            ios_backgroundColor={colors.border}
+                                        />
+                                    ) : (
+                                        <Feather name="chevron-right" size={16} color={colors.textMuted} />
+                                    )}
                             </View>
                         </Pressable>
                     ))}
