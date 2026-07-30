@@ -1,13 +1,15 @@
 import { useTheme } from "@/context/ThemeContext";
 import { BudgetNode } from "@/types/budget";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
     runOnJS,
     useAnimatedStyle,
     useSharedValue,
+    withRepeat,
+    withSequence,
     withSpring,
     withTiming,
 } from "react-native-reanimated";
@@ -62,6 +64,9 @@ export default function BudgetListCard({
     const hasSubBudgets = subBudgets.length > 0;
     const displaySpent = (hasSubBudgets ? calculateTotalSpent(subBudgets) : spent) ?? 0;
 
+    // Over-budget detection (root level only — requires showPercentage + income)
+    const isOverBudget = showPercentage && income != null && displaySpent > income;
+
     const percentage =
         showPercentage && income
             ? Math.min((displaySpent / income) * 100, 100)
@@ -69,15 +74,38 @@ export default function BudgetListCard({
 
     // Status: over budget, warning, healthy
     const statusColor =
-        percentage === null
-            ? colors.accent
-            : percentage >= 100
-                ? colors.error
-                : percentage >= 75
-                    ? colors.warning
-                    : colors.success;
+        isOverBudget
+            ? colors.error
+            : percentage === null
+                ? colors.accent
+                : percentage >= 100
+                    ? colors.error
+                    : percentage >= 75
+                        ? colors.warning
+                        : colors.success;
 
     const progressColor = statusColor;
+
+    // Pulse animation for the OVER BUDGET badge
+    const badgeScale = useSharedValue(1);
+    useEffect(() => {
+        if (isOverBudget) {
+            badgeScale.value = withRepeat(
+                withSequence(
+                    withTiming(1.08, { duration: 600 }),
+                    withTiming(1.0, { duration: 600 })
+                ),
+                -1,
+                true
+            );
+        } else {
+            badgeScale.value = withTiming(1);
+        }
+    }, [isOverBudget]);
+
+    const overBudgetBadgeStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: badgeScale.value }],
+    }));
 
     const triggerDeleteConfirm = () => setDeleteConfirmVisible(true);
 
@@ -255,7 +283,7 @@ export default function BudgetListCard({
                                 overflow: "hidden",
                             }}
                         >
-                            {/* Top accent stripe */}
+                            {/* Top accent stripe — red when over budget */}
                             <View
                                 style={{
                                     height: 3,
@@ -353,28 +381,59 @@ export default function BudgetListCard({
                                             / ₱{income.toLocaleString()}
                                         </Text>
                                     )}
-                                    {/* Status badge */}
-                                    {percentage !== null && (
-                                        <View
-                                            style={{
-                                                marginLeft: "auto",
-                                                backgroundColor: statusColor + "20",
-                                                borderRadius: 20,
-                                                paddingHorizontal: 10,
-                                                paddingVertical: 3,
-                                            }}
-                                        >
-                                            <Text
+                                    {/* Status badges — right-aligned */}
+                                    <View style={{ marginLeft: "auto", flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                        {/* OVER BUDGET pill */}
+                                        {isOverBudget && (
+                                            <Animated.View
+                                                style={[
+                                                    {
+                                                        flexDirection: "row",
+                                                        alignItems: "center",
+                                                        backgroundColor: colors.error,
+                                                        borderRadius: 20,
+                                                        paddingHorizontal: 10,
+                                                        paddingVertical: 4,
+                                                    },
+                                                ]}
+                                            >
+                                                {/* <Ionicons name="warning-outline" size={11} color="#fff" /> */}
+                                                <Text
+                                                    style={{
+                                                        fontSize: 11,
+                                                        fontWeight: "800",
+                                                        color: "#fff",
+                                                        letterSpacing: 0.4,
+                                                    }}
+                                                >
+                                                    OVER BUDGET
+                                                </Text>
+                                            </Animated.View>
+                                        )}
+                                        {/* Percentage badge */}
+                                        {percentage !== null && (
+                                            <View
                                                 style={{
-                                                    fontSize: 12,
-                                                    fontWeight: "700",
-                                                    color: statusColor,
+                                                    backgroundColor: statusColor + "20",
+                                                    borderRadius: 20,
+                                                    paddingHorizontal: 10,
+                                                    paddingVertical: 3,
                                                 }}
                                             >
-                                                {Math.round(percentage)}%
-                                            </Text>
-                                        </View>
-                                    )}
+                                                <Text
+                                                    style={{
+                                                        fontSize: 12,
+                                                        fontWeight: "700",
+                                                        color: statusColor,
+                                                    }}
+                                                >
+                                                    {isOverBudget
+                                                        ? `${Math.round((displaySpent / income!) * 100)}%`
+                                                        : `${Math.round(percentage)}%`}
+                                                </Text>
+                                            </View>
+                                        )}
+                                    </View>
                                 </View>
 
                                 {/* ── Row 3: Progress bar ── */}
