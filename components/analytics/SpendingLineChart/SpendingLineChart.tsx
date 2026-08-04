@@ -2,6 +2,7 @@ import React from "react";
 import { Text, View } from "react-native";
 import { Circle, Line, Path, Svg } from "react-native-svg";
 import { useTheme } from "@/context/ThemeContext";
+import ChartLegends from "./components/ChartLegends";
 
 // ─── Stub Data ────────────────────────────────────────────────────────────────
 const STUB_PERIODS = [
@@ -241,23 +242,11 @@ export default function SpendingLineChart() {
             </View>
 
             {/* ── Legend ──────────────────────────────────────────────────────── */}
-            <View
-                style={{
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    gap: 20,
-                    marginTop: 4,
-                }}
-            >
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    <View style={{ width: 16, height: 3, borderRadius: 2, backgroundColor: ACCENT }} />
-                    <Text style={{ fontSize: 11, color: labelColor }}>Expenses</Text>
-                </View>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    <View style={{ width: 16, height: 3, borderRadius: 2, backgroundColor: GREEN }} />
-                    <Text style={{ fontSize: 11, color: labelColor }}>Budget Limit</Text>
-                </View>
-            </View>
+            <ChartLegends
+                accentColor={ACCENT}
+                budgetColor={GREEN}
+                labelColor={labelColor}
+            />
         </View>
     );
 }
