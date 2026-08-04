@@ -1,8 +1,8 @@
-import { useTheme } from "@/context/ThemeContext";
 import React from "react";
 import { Text, View } from "react-native";
+import { useTheme } from "@/context/ThemeContext";
 
-export default function PeriodComparisonTable() {
+export default function TopExpensesCard() {
     const { colors } = useTheme();
 
     return (
