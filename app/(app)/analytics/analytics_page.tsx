@@ -1,13 +1,19 @@
-import React from "react";
-import { ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "@/context/ThemeContext";
+import PeriodComparisonTable from "@/components/analytics/PeriodComparisonTable";
 import SpendingLineChart from "@/components/analytics/SpendingLineChart";
 import TopExpensesCard from "@/components/analytics/TopExpensesCard";
-import PeriodComparisonTable from "@/components/analytics/PeriodComparisonTable";
+import { useTheme } from "@/context/ThemeContext";
+import { useBudgets } from "@/hooks/useBudgets";
+import { deriveChartPoints } from "@/utils/analyticsHelpers";
+import React from "react";
+import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AnalyticsScreen() {
     const { colors } = useTheme();
+    const { budgets, loading } = useBudgets();
+
+    // Derive the last 5 periods sorted by date for the line chart
+    const chartPoints = deriveChartPoints(budgets, 5);
 
     const sectionLabel = {
         fontSize: 12,
@@ -52,7 +58,23 @@ export default function AnalyticsScreen() {
                 {/* PHASE 1 — Spending Trend */}
                 <View>
                     <Text style={sectionLabel}>Spending Trend</Text>
-                    <SpendingLineChart />
+                    {loading ? (
+                        <View
+                            style={{
+                                height: 180,
+                                borderRadius: 16,
+                                backgroundColor: colors.surface,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                borderWidth: 1,
+                                borderColor: colors.border,
+                            }}
+                        >
+                            <ActivityIndicator size="large" color={colors.accent} />
+                        </View>
+                    ) : (
+                        <SpendingLineChart periods={chartPoints} />
+                    )}
                 </View>
 
                 {/* PHASE 2 — Top 5 Biggest Expenses */}
