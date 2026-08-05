@@ -27,7 +27,7 @@ export default function ChartLegends({
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                 <View style={{ width: 16, height: 3, borderRadius: 2, backgroundColor: budgetColor }} />
-                <Text style={{ fontSize: 11, color: labelColor }}>Budget Limit</Text>
+                <Text style={{ fontSize: 11, color: labelColor }}>Income</Text>
             </View>
         </View>
     );
