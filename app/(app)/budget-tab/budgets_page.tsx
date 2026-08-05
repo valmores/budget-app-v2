@@ -4,6 +4,7 @@ import BudgetListCard from "@/components/budget-tab/BudgetListCard";
 import BudgetSkeleton from "@/components/budget-tab/BudgetSkeleton";
 import EditDrawer from "@/components/budget-tab/EditDrawer";
 import PasteConfirmModal from "@/components/budget-tab/PasteConfirmModal";
+import BudgetIncomeTab from "@/components/budget-tab/BudgetIncomeTab";
 import SummaryCard from "@/components/budget-tab/SummaryCard";
 import { useTheme } from "@/context/ThemeContext";
 import { formatTimestamp, useBudgets } from "@/hooks/useBudgets";
@@ -11,7 +12,7 @@ import { BudgetNode, BudgetPeriod, BudgetUpdate } from "@/types/budget";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
-import { Animated, BackHandler, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Animated, BackHandler, Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function BudgetsScreen() {
@@ -23,6 +24,7 @@ export default function BudgetsScreen() {
     const [pasteTarget, setPasteTarget] = useState<BudgetNode | BudgetPeriod | null>(null);
     const [showSearch, setShowSearch] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [tab, setTab] = useState<"income" | "expenses">("expenses");
     const searchAnim = useRef(new Animated.Value(0)).current;
 
     const toggleSearch = () => {
@@ -289,6 +291,11 @@ export default function BudgetsScreen() {
                     hasIncome={isRoot}
                 />
             </View>
+
+            <BudgetIncomeTab tab={tab} onTabChange={setTab} />
+
+            {/* {tab === "income" ? <IncomeComponent /> : <ExpenseComponent />} */}
+
             {/* Breadcrumbs + Collapsible Search */}
             <View
                 style={{
@@ -468,87 +475,95 @@ export default function BudgetsScreen() {
             >
                 <Feather name="plus" size={24} color="#fff" />
             </TouchableOpacity>
-            {showAddDrawer && (
-                <AddDrawer
-                    currentParent={currentParent}
-                    colors={colors}
-                    setShowAddDrawer={setShowAddDrawer}
-                    onSave={handleAdd}
-                />
-            )}
-            {editTarget && (
-                <EditDrawer
-                    budget={editTarget}
-                    colors={{
-                        surface: colors.surface,
-                        textPrimary: colors.textPrimary,
-                        textSecondary: colors.textSecondary,
-                        accent: colors.accent,
-                        border: colors.border,
-                        warning: colors.warning,
-                    }}
-                    onClose={() => setEditTarget(null)}
-                    onSave={handleSaveEdit}
-                />
-            )}
+            {
+                showAddDrawer && (
+                    <AddDrawer
+                        currentParent={currentParent}
+                        colors={colors}
+                        setShowAddDrawer={setShowAddDrawer}
+                        onSave={handleAdd}
+                    />
+                )
+            }
+            {
+                editTarget && (
+                    <EditDrawer
+                        budget={editTarget}
+                        colors={{
+                            surface: colors.surface,
+                            textPrimary: colors.textPrimary,
+                            textSecondary: colors.textSecondary,
+                            accent: colors.accent,
+                            border: colors.border,
+                            warning: colors.warning,
+                        }}
+                        onClose={() => setEditTarget(null)}
+                        onSave={handleSaveEdit}
+                    />
+                )
+            }
 
             {/* Floating Banner when an item is copied */}
-            {copiedNode && (
-                <View
-                    style={{
-                        position: "absolute",
-                        bottom: 96,
-                        left: 20,
-                        right: 20,
-                        backgroundColor: colors.accent,
-                        borderRadius: 16,
-                        paddingVertical: 12,
-                        paddingHorizontal: 16,
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        elevation: 8,
-                        shadowColor: "#000",
-                        shadowOpacity: 0.25,
-                        shadowRadius: 10,
-                        shadowOffset: { width: 0, height: 4 },
-                    }}
-                >
-                    <View style={{ flex: 1, marginRight: 10 }}>
-                        <Text style={{ color: "#fff", fontSize: 13, fontWeight: "700" }} numberOfLines={1}>
-                            Copied "{copiedNode.title}"
-                        </Text>
-                        <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 11, marginTop: 1 }}>
-                            Long-press target card to paste item
-                        </Text>
-                    </View>
-                    <TouchableOpacity
-                        onPress={() => setCopiedNode(null)}
-                        activeOpacity={0.7}
+            {
+                copiedNode && (
+                    <View
                         style={{
-                            width: 28,
-                            height: 28,
-                            borderRadius: 14,
-                            backgroundColor: "rgba(255,255,255,0.2)",
-                            justifyContent: "center",
+                            position: "absolute",
+                            bottom: 96,
+                            left: 20,
+                            right: 20,
+                            backgroundColor: colors.accent,
+                            borderRadius: 16,
+                            paddingVertical: 12,
+                            paddingHorizontal: 16,
+                            flexDirection: "row",
                             alignItems: "center",
+                            justifyContent: "space-between",
+                            elevation: 8,
+                            shadowColor: "#000",
+                            shadowOpacity: 0.25,
+                            shadowRadius: 10,
+                            shadowOffset: { width: 0, height: 4 },
                         }}
                     >
-                        <Ionicons name="close" size={16} color="#fff" />
-                    </TouchableOpacity>
-                </View>
-            )}
+                        <View style={{ flex: 1, marginRight: 10 }}>
+                            <Text style={{ color: "#fff", fontSize: 13, fontWeight: "700" }} numberOfLines={1}>
+                                Copied "{copiedNode.title}"
+                            </Text>
+                            <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 11, marginTop: 1 }}>
+                                Long-press target card to paste item
+                            </Text>
+                        </View>
+                        <TouchableOpacity
+                            onPress={() => setCopiedNode(null)}
+                            activeOpacity={0.7}
+                            style={{
+                                width: 28,
+                                height: 28,
+                                borderRadius: 14,
+                                backgroundColor: "rgba(255,255,255,0.2)",
+                                justifyContent: "center",
+                                alignItems: "center",
+                            }}
+                        >
+                            <Ionicons name="close" size={16} color="#fff" />
+                        </TouchableOpacity>
+                    </View>
+                )
+            }
 
             {/* Paste Confirmation Modal */}
-            {copiedNode && pasteTarget && (
-                <PasteConfirmModal
-                    visible={true}
-                    sourceTitle={copiedNode.title}
-                    targetTitle={pasteTarget.title}
-                    onConfirm={handleConfirmPaste}
-                    onCancel={() => setPasteTarget(null)}
-                />
-            )}
-        </SafeAreaView>
+            {
+                copiedNode && pasteTarget && (
+                    <PasteConfirmModal
+                        visible={true}
+                        sourceTitle={copiedNode.title}
+                        targetTitle={pasteTarget.title}
+                        onConfirm={handleConfirmPaste}
+                        onCancel={() => setPasteTarget(null)}
+                    />
+                )
+            }
+        </SafeAreaView >
     );
 }
