@@ -1,19 +1,14 @@
+import { useTheme } from "@/context/ThemeContext";
+import { ChartPeriodPoint } from "@/utils/analyticsHelpers";
 import React from "react";
 import { Text, View } from "react-native";
 import { Circle, Line, Path, Svg } from "react-native-svg";
-import { useTheme } from "@/context/ThemeContext";
 import ChartLegends from "./components/ChartLegends";
 
-// ─── Stub Data ────────────────────────────────────────────────────────────────
-const STUB_PERIODS = [
-    { label: "Mar", spent: 4200, budget: 12000 },
-    { label: "Apr", spent: 9800, budget: 13000 },
-    { label: "May", spent: 7100, budget: 12500 },
-    { label: "Jun", spent: 11500, budget: 12000 },
-    { label: "Jul", spent: 6300, budget: 11000 },
-];
+interface SpendingLineChartProps {
+    periods: ChartPeriodPoint[];
+}
 
-// ─── Smooth Curve Generator ──────────────────────────────────────────────────
 function createSmoothPath(points: { x: number; y: number }[]): string {
     if (points.length === 0) return "";
     if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
@@ -54,7 +49,7 @@ function formatK(value: number): string {
     return value >= 1000 ? `₱${(value / 1000).toFixed(0)}k` : `₱${value}`;
 }
 
-export default function SpendingLineChart() {
+export default function SpendingLineChart({ periods }: SpendingLineChartProps) {
     const { colors, isDark } = useTheme();
 
     const GREEN = colors.success;
@@ -67,26 +62,28 @@ export default function SpendingLineChart() {
     const plotW = chartWidth - CHART_PADDING_LEFT - CHART_PADDING_RIGHT;
     const plotH = CHART_HEIGHT - CHART_PADDING_TOP - CHART_PADDING_BOTTOM;
 
-    const allValues = STUB_PERIODS.flatMap((p) => [p.spent, p.budget]);
-    const maxVal = Math.ceil(Math.max(...allValues) / 1000) * 1000;
+    const isEmpty = periods.length === 0;
+
+    const allValues = isEmpty ? [0] : periods.flatMap((p) => [p.spent, p.budget]);
+    const maxVal = isEmpty ? 1000 : Math.ceil(Math.max(...allValues) / 1000) * 1000;
     const minVal = 0;
-    const range = maxVal - minVal;
+    const range = maxVal - minVal || 1;
 
     function toY(val: number) {
         return CHART_PADDING_TOP + plotH - ((val - minVal) / range) * plotH;
     }
 
     function toX(i: number) {
-        return CHART_PADDING_LEFT + (i / (STUB_PERIODS.length - 1)) * plotW;
+        const denom = periods.length > 1 ? periods.length - 1 : 1;
+        return CHART_PADDING_LEFT + (i / denom) * plotW;
     }
 
-    const spentPointObjs = STUB_PERIODS.map((p, i) => ({ x: toX(i), y: toY(p.spent) }));
-    const budgetPointObjs = STUB_PERIODS.map((p, i) => ({ x: toX(i), y: toY(p.budget) }));
+    const spentPointObjs = periods.map((p, i) => ({ x: toX(i), y: toY(p.spent) }));
+    const budgetPointObjs = periods.map((p, i) => ({ x: toX(i), y: toY(p.budget) }));
 
     const spentPathD = createSmoothPath(spentPointObjs);
     const budgetPathD = createSmoothPath(budgetPointObjs);
 
-    // Y-axis grid & labels
     const gridSteps = Array.from({ length: GRID_LINES + 1 }, (_, i) => i / GRID_LINES);
 
     const cardStyle = {
@@ -163,7 +160,7 @@ export default function SpendingLineChart() {
                     />
 
                     {/* ── Dots + value labels ──────────────────────────────── */}
-                    {STUB_PERIODS.map((p, i) => {
+                    {periods?.map((p, i) => {
                         const sx = toX(i);
                         const sy = toY(p.spent);
                         const bx = toX(i);
@@ -171,12 +168,8 @@ export default function SpendingLineChart() {
 
                         return (
                             <React.Fragment key={i}>
-                                {/* Expense dot */}
                                 <Circle cx={sx} cy={sy} r={DOT_RADIUS} fill={ACCENT} />
-                                {/* Budget dot */}
                                 <Circle cx={bx} cy={by} r={DOT_RADIUS} fill={GREEN} />
-
-                                {/* Expense value label */}
                                 <Text
                                     style={{
                                         position: "absolute",
@@ -227,7 +220,7 @@ export default function SpendingLineChart() {
                     })}
 
                     {/* ── Vertical dot lines to X-axis ────────────────────── */}
-                    {STUB_PERIODS.map((_, i) => (
+                    {periods?.map((_, i) => (
                         <Line
                             key={`vl-${i}`}
                             x1={toX(i)}
