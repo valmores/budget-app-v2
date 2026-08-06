@@ -1,5 +1,4 @@
 import AddDrawer from "@/components/budget-tab/AddDrawer";
-// {tab === "expenses" ? <BudgetExpensesTab /> : <BudgetIncomeTab />}
 import Breadcrumbs from "@/components/budget-tab/Breadcrumbs";
 import BudgetListCard from "@/components/budget-tab/BudgetListCard";
 import BudgetSkeleton from "@/components/budget-tab/BudgetSkeleton";
