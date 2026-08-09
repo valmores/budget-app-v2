@@ -37,6 +37,6 @@ export function deriveChartPoints(
     return sliced.map((p) => ({
         label: shortLabel(p.date),
         spent: totalSpent(p),
-        budget: p.income,
+        budget: p.income ?? 0,
     }));
 }

@@ -1,9 +1,13 @@
 import { Timestamp } from "firebase/firestore";
 
+export type NodeType = "income" | "expense";
+
 export type BudgetNode = {
     id: string;
     title: string;
-    spent?: number;
+    type?: NodeType;         // "income" or "expense" (defaults to "expense" for legacy nodes)
+    amount?: number;         // Income Node: Total Income Amount / Limit
+    spent?: number;          // Expense Node: Actual Amount Spent
     date: string;           // display string e.g. "Jun 30, 2026"
     dateMs: number;         // epoch ms from the user-picked date — use this for sorting
     added_by: string;
@@ -18,7 +22,7 @@ export type BudgetNode = {
 export type BudgetPeriod = {
     id: string;
     title: string;
-    income: number;
+    income?: number;        // Legacy field (deprecated / calculated dynamically)
     date: string;           // display string e.g. "Jul 15, 2026"
     dateMs: number;         // epoch ms from the user-picked date — use this for sorting
     added_by: string;

@@ -100,7 +100,7 @@ export default function BudgetExpensesTab() {
 
     const totalSpent = budgets.reduce((sum, b) => sum + getTotalSpent(b.subBudgets), 0);
 
-    const totalLimit = budgets.reduce((sum, b) => sum + b.income, 0);
+    const totalLimit = budgets.reduce((sum, b) => sum + (b.income ?? 0), 0);
 
     // Use live node for header so totals update immediately too
     const headerSpent = liveCurrentParent
@@ -108,9 +108,9 @@ export default function BudgetExpensesTab() {
         : totalSpent;
 
     const headerLimit = liveCurrentParent
-        ? "income" in liveCurrentParent
+        ? ("income" in liveCurrentParent && liveCurrentParent.income !== undefined
             ? liveCurrentParent.income
-            : (liveCurrentParent.spent ?? 0)
+            : ("spent" in liveCurrentParent ? (liveCurrentParent.spent ?? 0) : 0))
         : totalLimit;
 
     const headerPercentage = headerLimit > 0 ? Math.round((headerSpent / headerLimit) * 100) : 0;
