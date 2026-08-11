@@ -24,12 +24,32 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
     const [drawerOffset, setDrawerOffset] = useState(0);
     const [activeInput, setActiveInput] = useState<"title" | "amount" | null>(null);
     const [title, setTitle] = useState(budget.title);
-    const [amount, setAmount] = useState(
-        "income" in budget
-            ? String((budget as BudgetPeriod).income)
-            : String((budget as BudgetNode).spent ?? "")
-    );
+    const [amount, setAmount] = useState(() => {
+        if ("income" in budget) {
+            // BudgetPeriod – legacy income field
+            return String((budget as BudgetPeriod).income ?? "");
+        }
+        const node = budget as BudgetNode;
+        // Income node stores its limit in `amount`, expense node stores in `spent`
+        return node.type === "income"
+            ? String(node.amount ?? "")
+            : String(node.spent ?? "");
+    });
+
+    // True for BudgetPeriod rows (legacy) OR income-type BudgetNodes
     const isIncomeBudget = "income" in budget;
+    const isIncomeNode = !isIncomeBudget && (budget as BudgetNode).type === "income";
+
+    // Derive a readable label for the amount field
+    const amountLabel = isIncomeBudget || isIncomeNode ? "INCOME AMOUNT" : "SPENT AMOUNT";
+    const amountPlaceholder = isIncomeBudget || isIncomeNode ? "Enter income amount" : "Enter spent amount";
+
+    // Derive the drawer title
+    const drawerTitle = isIncomeBudget
+        ? "Edit Budget Period"
+        : isIncomeNode
+            ? "Edit Income Source"
+            : "Edit Expense";
 
     // Parse the display string (e.g. "Jun 30, 2026") back into a Date for the picker.
     const [selectedDate, setSelectedDate] = useState<Date>(() => {
@@ -69,8 +89,13 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
         };
         if (!isNaN(parsed)) {
             if (isIncomeBudget) {
+                // BudgetPeriod: update legacy income field
                 (update as Partial<BudgetPeriod>).income = parsed;
+            } else if (isIncomeNode) {
+                // Income BudgetNode: update the `amount` (income limit) field
+                (update as Partial<BudgetNode>).amount = parsed;
             } else {
+                // Expense BudgetNode: update the `spent` field
                 (update as Partial<BudgetNode>).spent = parsed;
             }
         }
@@ -128,7 +153,7 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
                         marginBottom: 20,
                     }}
                 >
-                    Edit Budget
+                    {drawerTitle}
                 </Text>
 
                 {/* Title input */}
@@ -178,12 +203,12 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
                             letterSpacing: 0.5,
                         }}
                     >
-                        {isIncomeBudget ? "INCOME" : "SPENT AMOUNT"}
+                        {amountLabel}
                     </Text>
                     <TextInput
                         value={amount}
                         onChangeText={setAmount}
-                        placeholder={isIncomeBudget ? "Enter income amount" : "Enter spent amount"}
+                        placeholder={amountPlaceholder}
                         placeholderTextColor="#9CA3AF"
                         keyboardType="numeric"
                         style={{

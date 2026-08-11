@@ -1,4 +1,4 @@
-import AddDrawer from "@/components/budget-tab/AddDrawer";
+import AddDrawer, { AddDrawerMode } from "@/components/budget-tab/AddDrawer";
 import Breadcrumbs from "@/components/budget-tab/Breadcrumbs";
 import BudgetListCard from "@/components/budget-tab/BudgetListCard";
 import BudgetSkeleton from "@/components/budget-tab/BudgetSkeleton";
@@ -79,6 +79,21 @@ export default function BudgetExpensesTab() {
 
     const activeList = liveCurrentParent ? liveCurrentParent.subBudgets : budgets;
     const isRoot = currentParentId === null;
+
+    // Derive which mode the AddDrawer should use based on current nav depth:
+    // - root (no parent)          → adding a Budget Period
+    // - inside a Period           → adding an Income Source
+    // - inside an Income node     → adding an Expense
+    const addMode: AddDrawerMode = (() => {
+        if (navStack.length === 0) return "period";
+        const top = navStack[navStack.length - 1];
+        // If top of stack is a BudgetNode with type "income" (or any BudgetNode), we're adding expense
+        // If top is a BudgetPeriod (no `type` field on BudgetPeriod, but has `income`), we're adding income
+        if ("income" in top) return "income"; // BudgetPeriod
+        const node = top as BudgetNode;
+        if (node.type === "income") return "expense";
+        return "expense"; // default for nested
+    })();
 
     function matchesSearch(node: BudgetNode | BudgetPeriod, query: string): boolean {
         if (!query) return true;
@@ -529,6 +544,7 @@ export default function BudgetExpensesTab() {
             {showAddDrawer && (
                 <AddDrawer
                     currentParent={currentParent}
+                    mode={addMode}
                     colors={colors}
                     setShowAddDrawer={setShowAddDrawer}
                     onSave={handleAdd}

@@ -5,8 +5,11 @@ import { Timestamp } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { Keyboard, Platform, Text, TextInput, TouchableOpacity, View } from "react-native";
 
+export type AddDrawerMode = "period" | "income" | "expense";
+
 interface AddDrawerProps {
     currentParent: BudgetNode | BudgetPeriod | null;
+    mode: AddDrawerMode;
     colors: { surface: string; textPrimary: string; accent: string; border: string };
     setShowAddDrawer: (show: boolean) => void;
     onSave: (data: {
@@ -17,7 +20,37 @@ interface AddDrawerProps {
     }) => Promise<void>;
 }
 
-export default function AddDrawer({ currentParent, colors, setShowAddDrawer, onSave }: AddDrawerProps) {
+const MODE_CONFIG: Record<AddDrawerMode, {
+    title: string;
+    titleLabel: string;
+    titlePlaceholder: string;
+    amountLabel: string;
+    amountPlaceholder: string;
+}> = {
+    period: {
+        title: "Add Budget Period",
+        titleLabel: "PERIOD NAME",
+        titlePlaceholder: "e.g. August 1 – 15, 2026",
+        amountLabel: "TOTAL INCOME",
+        amountPlaceholder: "e.g. 25000",
+    },
+    income: {
+        title: "Add Income Source",
+        titleLabel: "SOURCE NAME",
+        titlePlaceholder: "e.g. Salary, Freelance, Bonus",
+        amountLabel: "INCOME AMOUNT",
+        amountPlaceholder: "e.g. 25000",
+    },
+    expense: {
+        title: "Add Expense",
+        titleLabel: "EXPENSE NAME",
+        titlePlaceholder: "e.g. Groceries, Rent, Transport",
+        amountLabel: "AMOUNT SPENT",
+        amountPlaceholder: "e.g. 500",
+    },
+};
+
+export default function AddDrawer({ currentParent, mode, colors, setShowAddDrawer, onSave }: AddDrawerProps) {
     const { user } = useAuth();
     const [drawerOffset, setDrawerOffset] = useState(0);
     const [activeInput, setActiveInput] = useState<"title" | "amount" | null>(null);
@@ -31,9 +64,7 @@ export default function AddDrawer({ currentParent, colors, setShowAddDrawer, onS
     const formatDate = (date: Date) =>
         date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-    const isRoot = currentParent === null;
-    const amountLabel = isRoot ? "Amount" : "Amount";
-    const amountPlaceholder = isRoot ? "e.g. 10000" : "e.g. 500";
+    const config = MODE_CONFIG[mode];
 
     useEffect(() => {
         const show = Keyboard.addListener("keyboardDidShow", () => {
@@ -133,7 +164,7 @@ export default function AddDrawer({ currentParent, colors, setShowAddDrawer, onS
                         marginBottom: 20,
                     }}
                 >
-                    {isRoot ? "Add Budget Period" : "Add Sub-Budget"}
+                    {config.title}
                 </Text>
 
                 {/* Error message */}
@@ -146,12 +177,12 @@ export default function AddDrawer({ currentParent, colors, setShowAddDrawer, onS
                 {/* Title */}
                 <View style={{ marginBottom: 12 }}>
                     <Text style={{ fontSize: 11, fontWeight: "600", color: colors.accent, marginBottom: 6, letterSpacing: 0.5 }}>
-                        TITLE
+                        {config.titleLabel}
                     </Text>
                     <TextInput
                         value={title}
                         onChangeText={setTitle}
-                        placeholder={isRoot ? "e.g. June 15 – June 30, 2026" : "e.g. Groceries"}
+                        placeholder={config.titlePlaceholder}
                         placeholderTextColor="#9CA3AF"
                         keyboardType="default"
                         style={{
@@ -174,12 +205,12 @@ export default function AddDrawer({ currentParent, colors, setShowAddDrawer, onS
                 {/* Amount */}
                 <View style={{ marginBottom: 12 }}>
                     <Text style={{ fontSize: 11, fontWeight: "600", color: colors.accent, marginBottom: 6, letterSpacing: 0.5 }}>
-                        {amountLabel.toUpperCase()}
+                        {config.amountLabel}
                     </Text>
                     <TextInput
                         value={amount}
                         onChangeText={setAmount}
-                        placeholder={amountPlaceholder}
+                        placeholder={config.amountPlaceholder}
                         placeholderTextColor="#9CA3AF"
                         keyboardType="numeric"
                         style={{
