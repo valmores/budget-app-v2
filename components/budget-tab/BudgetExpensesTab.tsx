@@ -113,20 +113,57 @@ export default function BudgetExpensesTab() {
         .filter((budget) => matchesSearch(budget, searchQuery))
         .sort((a, b) => b.dateMs - a.dateMs);
 
+    // ── Header / Summary Card calculations ────────────────────────────────────
+    // Sum all income-node `amount` values across all periods
+    const totalLimit = budgets.reduce((sum, period) =>
+        sum + period.subBudgets
+            .filter((n) => n.type === "income")
+            .reduce((s, n) => s + (n.amount ?? 0), 0)
+    , 0);
+
+    // Total spent = leaf-level expense nodes across all periods
     const totalSpent = budgets.reduce((sum, b) => sum + getTotalSpent(b.subBudgets), 0);
 
-    const totalLimit = budgets.reduce((sum, b) => sum + (b.income ?? 0), 0);
+    // Determine current header values based on nav depth
+    const headerNodeType: "income" | "expense" | "period" | "root" = (() => {
+        if (!liveCurrentParent) return "root";
+        if ("income" in liveCurrentParent) return "period";        // BudgetPeriod
+        const n = liveCurrentParent as import("@/types/budget").BudgetNode;
+        return n.type === "income" ? "income" : "expense";
+    })();
 
     // Use live node for header so totals update immediately too
-    const headerSpent = liveCurrentParent
-        ? getTotalSpent(liveCurrentParent.subBudgets ?? [])
-        : totalSpent;
+    const headerSpent = (() => {
+        if (!liveCurrentParent) return totalSpent;                 // root
+        if (headerNodeType === "period") {
+            // Sum expenses across all income-node children of this period
+            return liveCurrentParent.subBudgets
+                .filter((n) => n.type === "income")
+                .reduce((sum, n) =>
+                    sum + n.subBudgets.reduce((s, e) => s + (e.spent ?? 0), 0)
+                , 0);
+        }
+        if (headerNodeType === "income") {
+            // Sum direct expense children
+            return liveCurrentParent.subBudgets.reduce((s, e) => s + (e.spent ?? 0), 0);
+        }
+        // Expense node or deeper
+        return getTotalSpent(liveCurrentParent.subBudgets ?? []);
+    })();
 
-    const headerLimit = liveCurrentParent
-        ? ("income" in liveCurrentParent && liveCurrentParent.income !== undefined
-            ? liveCurrentParent.income
-            : ("spent" in liveCurrentParent ? (liveCurrentParent.spent ?? 0) : 0))
-        : totalLimit;
+    const headerLimit = (() => {
+        if (!liveCurrentParent) return totalLimit;                 // root
+        if (headerNodeType === "period") {
+            // Sum all income node `amount`s in this period
+            return liveCurrentParent.subBudgets
+                .filter((n) => n.type === "income")
+                .reduce((sum, n) => sum + (n.amount ?? 0), 0);
+        }
+        if (headerNodeType === "income") {
+            return (liveCurrentParent as import("@/types/budget").BudgetNode).amount ?? 0;
+        }
+        return 0;
+    })();
 
     const headerPercentage = headerLimit > 0 ? Math.round((headerSpent / headerLimit) * 100) : 0;
 
@@ -192,6 +229,7 @@ export default function BudgetExpensesTab() {
         if (updated.title !== undefined) firestoreUpdates.title = updated.title;
         if (isPeriod && updated.income !== undefined) firestoreUpdates.income = updated.income;
         if (!isPeriod && updated.spent !== undefined) firestoreUpdates.spent = updated.spent;
+        if (!isPeriod && updated.amount !== undefined) firestoreUpdates.amount = updated.amount;
         if (updated.added_by !== undefined) firestoreUpdates.added_by = updated.added_by;
         if (updated.date !== undefined) firestoreUpdates.date = updated.date;
 
@@ -246,18 +284,38 @@ export default function BudgetExpensesTab() {
                 "income" in currentParent
                     ? currentParent.id
                     : (currentParent as BudgetNode).periodId;
-            const parentId = "income" in currentParent ? null : currentParent.id;
+            // Direct child of a period = income node (parentId: null)
+            // Direct child of an income node = expense node (parentId: incomeNode.id)
+            const isAddingIncome = "income" in currentParent; // parent is a BudgetPeriod
+            const parentId = isAddingIncome ? null : currentParent.id;
 
-            await addBudgetNode(
-                {
-                    title: data.title,
-                    spent: data.amount,
-                    date: data.date,
-                    added_by: data.added_by,
-                },
-                parentId,
-                periodId
-            );
+            if (isAddingIncome) {
+                // Income node: store limit in `amount`, mark type
+                await addBudgetNode(
+                    {
+                        title: data.title,
+                        amount: data.amount,
+                        type: "income",
+                        date: data.date,
+                        added_by: data.added_by,
+                    },
+                    parentId,
+                    periodId
+                );
+            } else {
+                // Expense node: store actual spend in `spent`, mark type
+                await addBudgetNode(
+                    {
+                        title: data.title,
+                        spent: data.amount,
+                        type: "expense",
+                        date: data.date,
+                        added_by: data.added_by,
+                    },
+                    parentId,
+                    periodId
+                );
+            }
         }
     };
 
@@ -327,7 +385,8 @@ export default function BudgetExpensesTab() {
                     added_by={liveCurrentParent ? liveCurrentParent.added_by : "N/A"}
                     showPercentage={isRoot}
                     income={isRoot ? totalLimit : undefined}
-                    hasIncome={isRoot}
+                    hasIncome={headerNodeType === "root" || headerNodeType === "period" || headerNodeType === "income"}
+                    nodeType={headerNodeType}
                 />
             </View>
 

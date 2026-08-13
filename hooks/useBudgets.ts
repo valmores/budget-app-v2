@@ -142,6 +142,8 @@ export function useBudgets() {
                     return {
                         id: d.id,
                         title: data.title,
+                        type: data.type ?? "expense",      // default to "expense" for legacy nodes
+                        amount: data.amount ?? undefined,   // income node limit; undefined for expense nodes
                         spent: data.spent,
                         date: formatTimestamp(data.date),
                         dateMs: ts instanceof Timestamp ? ts.toMillis() : 0,
@@ -194,7 +196,9 @@ export function useBudgets() {
     const addBudgetNode = async (
         data: {
             title: string;
-            spent?: number;
+            type?: "income" | "expense";
+            amount?: number;   // income node: total income limit
+            spent?: number;    // expense node: actual amount spent
             date: Timestamp;
             added_by: string;
         },

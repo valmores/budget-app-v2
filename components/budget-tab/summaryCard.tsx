@@ -18,6 +18,8 @@ type BudgetListCardProps = {
     showPercentage?: boolean;
     income?: number;
     hasIncome: boolean;
+    /** Current nav depth — drives label copy in the summary card */
+    nodeType?: "root" | "period" | "income" | "expense";
 };
 
 export default function SummaryCard({
@@ -28,6 +30,7 @@ export default function SummaryCard({
     headerSpent,
     headerLimit,
     headerPercentage,
+    nodeType = "root",
 }: BudgetListCardProps) {
     const { colors } = useTheme();
     const [isPrivate, setIsPrivate] = useState(false);
@@ -45,6 +48,16 @@ export default function SummaryCard({
         setIsPrivate((prev) => !prev);
     };
 
+    // Context-sensitive labels
+    const spentLabel =
+        nodeType === "income" ? "Expenses" :
+        nodeType === "period" ? "Total Spent" :
+        "Total Spent";
+    const limitLabel =
+        nodeType === "income" ? "Income Limit" :
+        nodeType === "period" ? "Total Income" :
+        "Budget";
+
     return (
         <View
             style={{
@@ -61,7 +74,7 @@ export default function SummaryCard({
                 <View style={{ alignItems: 'flex-start' }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 1 }}>
                         <Text style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', letterSpacing: 1, textTransform: 'uppercase' }}>
-                            Total Spent
+                            {spentLabel}
                         </Text>
                         <TouchableOpacity
                             onPress={togglePrivacy}
@@ -88,7 +101,7 @@ export default function SummaryCard({
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                             {/* Budget chip */}
                             <View style={{ backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 8, paddingVertical: 4, paddingHorizontal: 8 }}>
-                                <Text style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 1 }}>Budget</Text>
+                                <Text style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 1 }}>{limitLabel}</Text>
                                 <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>
                                     {isPrivate ? '\u20B1••••' : `\u20B1${headerLimit.toLocaleString()}`}
                                 </Text>
