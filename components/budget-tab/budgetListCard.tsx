@@ -28,6 +28,10 @@ type BudgetListCardProps = {
     onDelete?: () => void;
     onAddSubBudget?: () => void;
     onMove?: () => void;
+    /** Hierarchy node type — drives Income vs Expense card layout */
+    nodeType?: "income" | "expense";
+    /** Income Node: total income limit / budget ceiling */
+    amount?: number;
 };
 
 const calculateTotalSpent = (nodes: BudgetNode[]): number => {
@@ -54,6 +58,8 @@ export default function BudgetListCard({
     onDelete,
     onAddSubBudget,
     onMove,
+    nodeType,
+    amount,
 }: BudgetListCardProps) {
     const { colors, isDark } = useTheme();
     const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
@@ -64,6 +70,26 @@ export default function BudgetListCard({
     const hasSubBudgets = subBudgets.length > 0;
     const displaySpent = (hasSubBudgets ? calculateTotalSpent(subBudgets) : spent) ?? 0;
 
+    // ── Income Node derived values ────────────────────────────────────────────
+    const isIncomeNode = nodeType === "income";
+    // Total spent by child expense nodes
+    const incomeChildSpent = isIncomeNode
+        ? subBudgets.reduce((sum, n) => sum + (n.spent ?? 0), 0)
+        : 0;
+    // Income limit from `amount` prop (set by parent from BudgetNode.amount)
+    const incomeLimit = isIncomeNode ? (amount ?? 0) : 0;
+    const incomeRemaining = incomeLimit - incomeChildSpent;
+    const incomeIsOver = isIncomeNode && incomeRemaining < 0;
+    const incomePercentage = isIncomeNode && incomeLimit > 0
+        ? Math.min((incomeChildSpent / incomeLimit) * 100, 100)
+        : 0;
+    const incomeStatusColor = incomeIsOver
+        ? colors.error
+        : incomePercentage >= 75
+            ? colors.warning
+            : colors.success;
+
+    // ── Period-level (legacy showPercentage path) ─────────────────────────────
     // Over-budget detection (root level only — requires showPercentage + income)
     const isOverBudget = showPercentage && income != null && displaySpent > income;
 
@@ -86,10 +112,10 @@ export default function BudgetListCard({
 
     const progressColor = statusColor;
 
-    // Pulse animation for the OVER BUDGET badge
+    // Pulse animation for the OVER BUDGET badge (period-level & income-level)
     const badgeScale = useSharedValue(1);
     useEffect(() => {
-        if (isOverBudget) {
+        if (isOverBudget || incomeIsOver) {
             badgeScale.value = withRepeat(
                 withSequence(
                     withTiming(1.08, { duration: 600 }),
@@ -101,7 +127,7 @@ export default function BudgetListCard({
         } else {
             badgeScale.value = withTiming(1);
         }
-    }, [isOverBudget]);
+    }, [isOverBudget, incomeIsOver]);
 
     const overBudgetBadgeStyle = useAnimatedStyle(() => ({
         transform: [{ scale: badgeScale.value }],
@@ -351,93 +377,198 @@ export default function BudgetListCard({
                                     )}
                                 </View>
 
-                                {/* ── Row 2: Spent amount (large) ── */}
-                                <View
-                                    style={{
-                                        flexDirection: "row",
-                                        alignItems: "baseline",
-                                        marginBottom: 10,
-                                        gap: 6,
-                                    }}
-                                >
-                                    <Text
-                                        style={{
-                                            fontSize: 16,
-                                            fontWeight: "800",
-                                            color: colors.textPrimary,
-                                            letterSpacing: -0.8,
-                                        }}
-                                    >
-                                        ₱{displaySpent.toLocaleString()}
-                                    </Text>
-                                    {income != null && (
-                                        <Text
+                                {/* ── Row 2: Amount display — branches on nodeType ── */}
+
+                                {/* ── INCOME NODE: spent-vs-limit + remaining pill ── */}
+                                {isIncomeNode ? (
+                                    <View style={{ marginBottom: 10 }}>
+                                        {/* Spent / Limit line */}
+                                        <View
                                             style={{
-                                                fontSize: 13,
-                                                fontWeight: "500",
-                                                color: colors.textMuted,
+                                                flexDirection: "row",
+                                                alignItems: "baseline",
+                                                gap: 4,
+                                                marginBottom: 8,
                                             }}
                                         >
-                                            / ₱{income.toLocaleString()}
-                                        </Text>
-                                    )}
-                                    {/* Status badges — right-aligned */}
-                                    <View style={{ marginLeft: "auto", flexDirection: "row", alignItems: "center", gap: 6 }}>
-                                        {/* OVER BUDGET pill */}
-                                        {isOverBudget && (
-                                            <Animated.View
-                                                style={[
-                                                    {
-                                                        flexDirection: "row",
-                                                        alignItems: "center",
-                                                        backgroundColor: colors.error,
-                                                        borderRadius: 20,
-                                                        paddingHorizontal: 10,
-                                                        paddingVertical: 4,
-                                                    },
-                                                ]}
-                                            >
-                                                {/* <Ionicons name="warning-outline" size={11} color="#fff" /> */}
-                                                <Text
-                                                    style={{
-                                                        fontSize: 11,
-                                                        fontWeight: "800",
-                                                        color: "#fff",
-                                                        letterSpacing: 0.4,
-                                                    }}
-                                                >
-                                                    OVER BUDGET
-                                                </Text>
-                                            </Animated.View>
-                                        )}
-                                        {/* Percentage badge */}
-                                        {percentage !== null && (
-                                            <View
+                                            <Text
                                                 style={{
-                                                    backgroundColor: statusColor + "20",
-                                                    borderRadius: 20,
-                                                    paddingHorizontal: 10,
-                                                    paddingVertical: 3,
+                                                    fontSize: 16,
+                                                    fontWeight: "800",
+                                                    color: incomeIsOver ? colors.error : colors.textPrimary,
+                                                    letterSpacing: -0.8,
                                                 }}
                                             >
-                                                <Text
+                                                ₱{incomeChildSpent.toLocaleString()}
+                                            </Text>
+                                            <Text
+                                                style={{
+                                                    fontSize: 13,
+                                                    fontWeight: "500",
+                                                    color: colors.textMuted,
+                                                }}
+                                            >
+                                                / ₱{incomeLimit.toLocaleString()}
+                                            </Text>
+                                            {/* Remaining / Over Budget pill */}
+                                            <View style={{ marginLeft: "auto" }}>
+                                                {incomeIsOver ? (
+                                                    <Animated.View
+                                                        style={[
+                                                            {
+                                                                flexDirection: "row",
+                                                                alignItems: "center",
+                                                                backgroundColor: colors.error,
+                                                                borderRadius: 20,
+                                                                paddingHorizontal: 10,
+                                                                paddingVertical: 4,
+                                                            },
+                                                            overBudgetBadgeStyle,
+                                                        ]}
+                                                    >
+                                                        <Text
+                                                            style={{
+                                                                fontSize: 11,
+                                                                fontWeight: "800",
+                                                                color: "#fff",
+                                                                letterSpacing: 0.4,
+                                                            }}
+                                                        >
+                                                            OVER BUDGET
+                                                        </Text>
+                                                    </Animated.View>
+                                                ) : (
+                                                    <View
+                                                        style={{
+                                                            backgroundColor: incomeStatusColor + "20",
+                                                            borderRadius: 20,
+                                                            paddingHorizontal: 10,
+                                                            paddingVertical: 4,
+                                                        }}
+                                                    >
+                                                        <Text
+                                                            style={{
+                                                                fontSize: 11,
+                                                                fontWeight: "700",
+                                                                color: incomeStatusColor,
+                                                            }}
+                                                        >
+                                                            Left: ₱{Math.abs(incomeRemaining).toLocaleString()}
+                                                        </Text>
+                                                    </View>
+                                                )}
+                                            </View>
+                                        </View>
+
+                                        {/* Progress bar */}
+                                        <View
+                                            style={{
+                                                height: 3,
+                                                backgroundColor: isDark
+                                                    ? "rgba(255,255,255,0.1)"
+                                                    : "rgba(0,0,0,0.06)",
+                                                borderRadius: 10,
+                                                overflow: "hidden",
+                                            }}
+                                        >
+                                            <View
+                                                style={{
+                                                    width: `${incomePercentage}%`,
+                                                    height: "100%",
+                                                    backgroundColor: incomeStatusColor,
+                                                    borderRadius: 10,
+                                                }}
+                                            />
+                                        </View>
+                                    </View>
+                                ) : (
+                                    // ── EXPENSE NODE / PERIOD: clean spent amount ──
+                                    <View
+                                        style={{
+                                            flexDirection: "row",
+                                            alignItems: "baseline",
+                                            marginBottom: 10,
+                                            gap: 6,
+                                        }}
+                                    >
+                                        <Text
+                                            style={{
+                                                fontSize: 16,
+                                                fontWeight: "800",
+                                                color: colors.textPrimary,
+                                                letterSpacing: -0.8,
+                                            }}
+                                        >
+                                            ₱{displaySpent.toLocaleString()}
+                                        </Text>
+                                        {income != null && (
+                                            <Text
+                                                style={{
+                                                    fontSize: 13,
+                                                    fontWeight: "500",
+                                                    color: colors.textMuted,
+                                                }}
+                                            >
+                                                / ₱{income.toLocaleString()}
+                                            </Text>
+                                        )}
+                                        {/* Status badges — right-aligned */}
+                                        <View style={{ marginLeft: "auto", flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                            {/* OVER BUDGET pill */}
+                                            {isOverBudget && (
+                                                <Animated.View
+                                                    style={[
+                                                        {
+                                                            flexDirection: "row",
+                                                            alignItems: "center",
+                                                            backgroundColor: colors.error,
+                                                            borderRadius: 20,
+                                                            paddingHorizontal: 10,
+                                                            paddingVertical: 4,
+                                                        },
+                                                    ]}
+                                                >
+                                                    <Text
+                                                        style={{
+                                                            fontSize: 11,
+                                                            fontWeight: "800",
+                                                            color: "#fff",
+                                                            letterSpacing: 0.4,
+                                                        }}
+                                                    >
+                                                        OVER BUDGET
+                                                    </Text>
+                                                </Animated.View>
+                                            )}
+                                            {/* Percentage badge */}
+                                            {percentage !== null && (
+                                                <View
                                                     style={{
-                                                        fontSize: 12,
-                                                        fontWeight: "700",
-                                                        color: statusColor,
+                                                        backgroundColor: statusColor + "20",
+                                                        borderRadius: 20,
+                                                        paddingHorizontal: 10,
+                                                        paddingVertical: 3,
                                                     }}
                                                 >
-                                                    {isOverBudget
-                                                        ? `${Math.round((displaySpent / income!) * 100)}%`
-                                                        : `${Math.round(percentage)}%`}
-                                                </Text>
-                                            </View>
-                                        )}
+                                                    <Text
+                                                        style={{
+                                                            fontSize: 12,
+                                                            fontWeight: "700",
+                                                            color: statusColor,
+                                                        }}
+                                                    >
+                                                        {isOverBudget
+                                                            ? `${Math.round((displaySpent / income!) * 100)}%`
+                                                            : `${Math.round(percentage)}%`}
+                                                    </Text>
+                                                </View>
+                                            )}
+                                        </View>
                                     </View>
-                                </View>
+                                )}
 
-                                {/* ── Row 3: Progress bar ── */}
-                                {percentage !== null && (
+                                {/* ── Row 3: Progress bar — period-level only (nodeType is undefined) ── */}
+                                {!isIncomeNode && percentage !== null && (
                                     <View style={{ marginBottom: 14 }}>
                                         <View
                                             style={{
@@ -530,7 +661,7 @@ export default function BudgetListCard({
                                     </View>
                                 </View>
 
-                                {/* ── Add Sub-Budget button ── */}
+                                {/* ── Add Expense / Sub-Budget button ── */}
                                 {onAddSubBudget && (
                                     <TouchableOpacity
                                         activeOpacity={0.75}
@@ -562,7 +693,7 @@ export default function BudgetListCard({
                                                 letterSpacing: 0.2,
                                             }}
                                         >
-                                            Add Sub-Budget
+                                            {isIncomeNode ? "Add Expense" : "Add Sub-Budget"}
                                         </Text>
                                     </TouchableOpacity>
                                 )}

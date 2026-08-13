@@ -442,23 +442,29 @@ export default function BudgetExpensesTab() {
                     />
                 }
             >
-                {filteredList.map((budget) => (
-                    <BudgetListCard
-                        key={budget.id}
-                        title={budget.title}
-                        spent={"spent" in budget ? (budget as BudgetNode).spent : 0}
-                        date={budget.date}
-                        added_by={budget.added_by}
-                        subBudgets={budget.subBudgets ?? []}
-                        showPercentage={isRoot}
-                        income={"income" in budget ? (budget as BudgetPeriod).income : undefined}
-                        onPress={() => handleDrillIn(budget)}
-                        onEdit={() => handleEdit(budget)}
-                        onDelete={() => handleDelete(budget)}
-                        onAddSubBudget={() => handleAddSubBudget(budget)}
-                        onMove={() => handleCardLongPress(budget)}
-                    />
-                ))}
+                {filteredList.map((budget) => {
+                    const isNode = !("income" in budget);
+                    const node = isNode ? (budget as BudgetNode) : null;
+                    return (
+                        <BudgetListCard
+                            key={budget.id}
+                            title={budget.title}
+                            spent={node ? node.spent : 0}
+                            date={budget.date}
+                            added_by={budget.added_by}
+                            subBudgets={budget.subBudgets ?? []}
+                            showPercentage={isRoot}
+                            income={"income" in budget ? (budget as BudgetPeriod).income : undefined}
+                            onPress={() => handleDrillIn(budget)}
+                            onEdit={() => handleEdit(budget)}
+                            onDelete={() => handleDelete(budget)}
+                            onAddSubBudget={() => handleAddSubBudget(budget)}
+                            onMove={() => handleCardLongPress(budget)}
+                            nodeType={node?.type}
+                            amount={node?.amount}
+                        />
+                    );
+                })}
 
                 {filteredList.length === 0 && searchQuery.trim().length > 0 && (
                     <View
