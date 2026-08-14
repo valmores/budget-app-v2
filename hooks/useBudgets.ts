@@ -190,6 +190,11 @@ export function useBudgets() {
 
     /**
      * Add a new BudgetNode under a period or another node.
+     *
+     * Firestore field strategy:
+     *  - Income node  → writes `amount` (the income limit/ceiling); omits `spent`.
+     *  - Expense node → writes `spent` (actual amount spent);       omits `amount`.
+     *
      * @param parentId  Firestore id of the parent node, or null if direct child of period
      * @param periodId  Firestore id of the root BudgetPeriod
      */
@@ -209,21 +214,41 @@ export function useBudgets() {
         const siblings = rawNodes.filter(
             (n) => n.periodId === periodId && n.parentId === parentId
         );
-        await addDoc(collection(db, "budgetNodes"), {
-            ...data,
+
+        const nodeType = data.type ?? "expense";
+
+        // Build a clean payload — only store the semantically correct numeric field.
+        const payload: Record<string, unknown> = {
+            title: data.title,
+            type: nodeType,
+            date: data.date,
+            added_by: data.added_by,
             periodId,
             parentId,
             order: siblings.length,
             createdAt: Timestamp.now(),
-        });
+        };
+
+        if (nodeType === "income") {
+            // Income node: total budget ceiling stored in `amount`
+            payload.amount = data.amount ?? 0;
+            // Do NOT write `spent` for income nodes
+        } else {
+            // Expense node: actual spend stored in `spent`
+            payload.spent = data.spent ?? 0;
+            // Do NOT write `amount` for expense nodes
+        }
+
+        await addDoc(collection(db, "budgetNodes"), payload);
     };
 
     /**
      * Update a BudgetPeriod or BudgetNode by Firestore document id.
+     * `amount` is included so income-node edits (e.g. changing the income limit) persist correctly.
      */
     const updateBudget = async (
         id: string,
-        updates: Partial<{ title: string; income: number; spent: number; added_by: string; date: Timestamp }>,
+        updates: Partial<{ title: string; income: number; amount: number; spent: number; added_by: string; date: Timestamp }>,
         isPeriod: boolean
     ) => {
         const colName = isPeriod ? "budgetPeriods" : "budgetNodes";
