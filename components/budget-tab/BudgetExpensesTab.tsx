@@ -25,7 +25,7 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // 🛠️  STUB MODE — flip to `false` to switch back to live Firestore data
 // ─────────────────────────────────────────────────────────────────────────────
-const USE_STUB = true;
+const USE_STUB = false;
 
 /** Rich mock hierarchy: Period → Income nodes → Expense nodes */
 const STUB_DATA: BudgetPeriod[] = [
