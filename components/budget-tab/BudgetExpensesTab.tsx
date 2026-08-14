@@ -351,12 +351,12 @@ export default function BudgetExpensesTab() {
             return liveCurrentParent.subBudgets
                 .filter((n) => n.type === "income")
                 .reduce((sum, n) =>
-                    sum + n.subBudgets.reduce((s, e) => s + (e.spent ?? 0), 0)
+                    sum + getTotalSpent(n.subBudgets ?? [])
                 , 0);
         }
         if (headerNodeType === "income") {
-            // Sum direct expense children
-            return liveCurrentParent.subBudgets.reduce((s, e) => s + (e.spent ?? 0), 0);
+            // Sum direct and nested expense children under this income node
+            return getTotalSpent(liveCurrentParent.subBudgets ?? []);
         }
         // Expense node or deeper
         return getTotalSpent(liveCurrentParent.subBudgets ?? []);
@@ -368,10 +368,11 @@ export default function BudgetExpensesTab() {
             // Sum all income node `amount`s in this period
             return liveCurrentParent.subBudgets
                 .filter((n) => n.type === "income")
-                .reduce((sum, n) => sum + (n.amount ?? 0), 0);
+                .reduce((sum, n) => sum + (n.amount ?? n.spent ?? 0), 0);
         }
         if (headerNodeType === "income") {
-            return (liveCurrentParent as import("@/types/budget").BudgetNode).amount ?? 0;
+            const incomeNode = liveCurrentParent as import("@/types/budget").BudgetNode;
+            return incomeNode.amount ?? incomeNode.spent ?? 0;
         }
         return 0;
     })();
@@ -381,7 +382,8 @@ export default function BudgetExpensesTab() {
     function getTotalSpent(nodes: any[]): number {
         return nodes.reduce((sum, node) => {
             const hasSub = node.subBudgets && node.subBudgets.length > 0;
-            return sum + (hasSub ? getTotalSpent(node.subBudgets) : (node.spent ?? 0));
+            const nodeSpent = (node.spent ?? (node.type !== "income" ? node.amount : 0)) ?? 0;
+            return sum + (hasSub ? getTotalSpent(node.subBudgets) : nodeSpent);
         }, 0);
     }
 

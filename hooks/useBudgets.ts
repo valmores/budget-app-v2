@@ -139,12 +139,13 @@ export function useBudgets() {
                 const nodes: BudgetNode[] = snap.docs.map((d) => {
                     const data = d.data();
                     const ts: Timestamp | undefined = data.date;
+                    const isIncome = data.type === "income";
                     return {
                         id: d.id,
                         title: data.title,
-                        type: data.type ?? "expense",      // default to "expense" for legacy nodes
-                        amount: data.amount ?? undefined,   // income node limit; undefined for expense nodes
-                        spent: data.spent,
+                        type: data.type ?? "expense", // default to "expense" for legacy nodes
+                        amount: isIncome ? (data.amount ?? data.spent) : data.amount, // income node limit
+                        spent: isIncome ? undefined : (data.spent ?? data.amount), // expense node spent
                         date: formatTimestamp(data.date),
                         dateMs: ts instanceof Timestamp ? ts.toMillis() : 0,
                         added_by: data.added_by,

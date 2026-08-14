@@ -37,7 +37,8 @@ type BudgetListCardProps = {
 const calculateTotalSpent = (nodes: BudgetNode[]): number => {
     return nodes.reduce((sum, node) => {
         const hasSub = node.subBudgets && node.subBudgets.length > 0;
-        return sum + (hasSub ? calculateTotalSpent(node.subBudgets) : (node.spent ?? 0));
+        const nodeSpent = (node.spent ?? (node.type !== "income" ? node.amount : 0)) ?? 0;
+        return sum + (hasSub ? calculateTotalSpent(node.subBudgets) : nodeSpent);
     }, 0);
 };
 
@@ -68,13 +69,13 @@ export default function BudgetListCard({
     const startX = useSharedValue(0);
 
     const hasSubBudgets = subBudgets.length > 0;
-    const displaySpent = (hasSubBudgets ? calculateTotalSpent(subBudgets) : spent) ?? 0;
+    const isIncomeNode = nodeType === "income";
+    const displaySpent = (hasSubBudgets ? calculateTotalSpent(subBudgets) : (spent ?? (!isIncomeNode ? amount : 0))) ?? 0;
 
     // ── Income Node derived values ────────────────────────────────────────────
-    const isIncomeNode = nodeType === "income";
-    // Total spent by child expense nodes
+    // Total spent by child expense nodes (recursive to capture any nested sub-expenses)
     const incomeChildSpent = isIncomeNode
-        ? subBudgets.reduce((sum, n) => sum + (n.spent ?? 0), 0)
+        ? calculateTotalSpent(subBudgets)
         : 0;
     // Income limit from `amount` prop (set by parent from BudgetNode.amount)
     const incomeLimit = isIncomeNode ? (amount ?? 0) : 0;
@@ -297,8 +298,8 @@ export default function BudgetListCard({
                 <GestureDetector gesture={panGesture}>
                     <Animated.View style={cardStyle}>
                         <TouchableOpacity
-                            activeOpacity={hasSubBudgets ? 0.75 : 1}
-                            onPress={hasSubBudgets ? onPress : undefined}
+                            activeOpacity={hasSubBudgets || isIncomeNode ? 0.75 : 1}
+                            onPress={hasSubBudgets || isIncomeNode ? onPress : undefined}
                             onLongPress={onMove}
                             delayLongPress={350}
                             style={{
@@ -350,20 +351,21 @@ export default function BudgetListCard({
                                                 letterSpacing: 0.1,
                                             }}
                                         >
-                                            {hasSubBudgets
-                                                ? `${subBudgets.length} sub-budget${subBudgets.length !== 1 ? "s" : ""}`
-                                                : "Individual budget"}
+                                            {isIncomeNode
+                                                ? `${subBudgets.length} expense${subBudgets.length !== 1 ? "s" : ""}`
+                                                : hasSubBudgets
+                                                    ? `${subBudgets.length} sub-budget${subBudgets.length !== 1 ? "s" : ""}`
+                                                    : "Individual budget"}
                                         </Text>
                                     </View>
 
                                     {/* Chevron for drilldown */}
-                                    {hasSubBudgets && (
+                                    {(hasSubBudgets || isIncomeNode) && (
                                         <View
                                             style={{
                                                 width: 28,
                                                 height: 28,
                                                 borderRadius: 8,
-                                                // backgroundColor: colors.accent + "15",
                                                 justifyContent: "center",
                                                 alignItems: "center",
                                             }}
