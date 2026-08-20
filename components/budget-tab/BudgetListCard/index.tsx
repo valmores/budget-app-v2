@@ -210,10 +210,16 @@ export default function BudgetListCard({
                             onLongPress={onMove}
                             delayLongPress={350}
                             style={{
-                                backgroundColor: colors.surface,
+                                backgroundColor: isIncomeNode
+                                    ? isDark
+                                        ? "rgba(76,175,80,0.07)"
+                                        : "rgba(67,160,71,0.05)"
+                                    : colors.surface,
                                 borderRadius: 18,
                                 borderWidth: 1,
-                                borderColor: colors.border,
+                                borderColor: isIncomeNode
+                                    ? colors.success + "55"
+                                    : colors.border,
                                 overflow: "hidden",
                             }}
                         >
