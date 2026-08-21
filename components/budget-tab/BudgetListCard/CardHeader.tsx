@@ -6,15 +6,19 @@ import { Text, View } from "react-native";
 type CardHeaderProps = {
     title: string;
     isIncomeNode: boolean;
+    isPeriodNode: boolean;
     hasSubBudgets: boolean;
     subBudgetsCount: number;
+    incomeCount: number;
 };
 
 export default function CardHeader({
     title,
     isIncomeNode,
+    isPeriodNode,
     hasSubBudgets,
     subBudgetsCount,
+    incomeCount,
 }: CardHeaderProps) {
     const { colors } = useTheme();
 
@@ -47,11 +51,11 @@ export default function CardHeader({
                         letterSpacing: 0.1,
                     }}
                 >
-                    {isIncomeNode
-                        ? `${subBudgetsCount} expense${subBudgetsCount !== 1 ? "s" : ""}`
+                    {isPeriodNode
+                        ? `${incomeCount} income${incomeCount !== 1 ? "s" : ""}`
                         : hasSubBudgets
-                        ? `${subBudgetsCount} sub-budget${subBudgetsCount !== 1 ? "s" : ""}`
-                        : "Individual budget"}
+                            ? `${subBudgetsCount} sub-budget${subBudgetsCount !== 1 ? "s" : ""}`
+                            : "Individual budget"}
                 </Text>
             </View>
 

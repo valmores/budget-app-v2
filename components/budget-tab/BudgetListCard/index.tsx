@@ -45,6 +45,7 @@ export default function BudgetListCard({
 
     const hasSubBudgets = subBudgets.length > 0;
     const isIncomeNode = nodeType === "income";
+    const isPeriodNode = nodeType === undefined;
     const displaySpent =
         (hasSubBudgets
             ? calculateTotalSpent(subBudgets)
@@ -231,8 +232,10 @@ export default function BudgetListCard({
                                 <CardHeader
                                     title={title}
                                     isIncomeNode={isIncomeNode}
+                                    isPeriodNode={isPeriodNode}
                                     hasSubBudgets={hasSubBudgets}
                                     subBudgetsCount={subBudgets.length}
+                                    incomeCount={subBudgets.filter(b => b.type === "income").length}
                                 />
 
                                 {/* Row 2: Amount display — branches on nodeType */}
