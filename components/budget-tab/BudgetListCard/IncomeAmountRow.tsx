@@ -99,7 +99,7 @@ export default function IncomeAmountRow({
                                     color: incomeStatusColor,
                                 }}
                             >
-                                Left: ₱{Math.abs(incomeRemaining).toLocaleString()}
+                                {Math.round(incomePercentage)}%
                             </Text>
                         </View>
                     )}
