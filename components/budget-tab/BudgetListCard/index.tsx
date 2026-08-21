@@ -206,8 +206,8 @@ export default function BudgetListCard({
                 <GestureDetector gesture={panGesture}>
                     <Animated.View style={cardStyle}>
                         <TouchableOpacity
-                            activeOpacity={hasSubBudgets || isIncomeNode ? 0.75 : 1}
-                            onPress={hasSubBudgets || isIncomeNode ? onPress : undefined}
+                            activeOpacity={hasSubBudgets ? 0.75 : 1}
+                            onPress={hasSubBudgets ? onPress : undefined}
                             onLongPress={onMove}
                             delayLongPress={350}
                             style={{

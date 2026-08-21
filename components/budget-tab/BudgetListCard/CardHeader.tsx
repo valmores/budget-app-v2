@@ -60,7 +60,7 @@ export default function CardHeader({
             </View>
 
             {/* Chevron for drilldown */}
-            {(hasSubBudgets || isIncomeNode) && (
+            {hasSubBudgets && (
                 <View
                     style={{
                         width: 28,
