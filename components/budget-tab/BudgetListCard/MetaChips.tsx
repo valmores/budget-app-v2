@@ -7,14 +7,18 @@ type MetaChipsProps = {
     added_by: string;
     date: string;
     isIncomeNode: boolean;
+    isPeriodNode: boolean;
     onAddSubBudget?: () => void;
+    onAddIncome?: () => void;
 };
 
 export default function MetaChips({
     added_by,
     date,
     isIncomeNode,
+    isPeriodNode,
     onAddSubBudget,
+    onAddIncome,
 }: MetaChipsProps) {
     const { colors, isDark } = useTheme();
 
@@ -76,7 +80,7 @@ export default function MetaChips({
             </View>
 
             {/* Add Expense / Sub-Budget button */}
-            {onAddSubBudget && (
+            {onAddSubBudget && onAddSubBudget && (
                 <TouchableOpacity
                     activeOpacity={0.75}
                     onPress={onAddSubBudget}
@@ -89,25 +93,31 @@ export default function MetaChips({
                         paddingVertical: 8,
                         borderRadius: 12,
                         borderWidth: 1.5,
-                        borderColor: colors.accent + "55",
+                        borderColor: (isPeriodNode ? colors.success : colors.accent) + "55",
                         borderStyle: "dashed",
-                        backgroundColor: colors.accent + "08",
+                        backgroundColor: (isPeriodNode ? colors.success : colors.accent) + "08",
                     }}
                 >
                     <Ionicons
                         name="add-circle-outline"
                         size={14}
-                        color={colors.accent}
+                        color={isPeriodNode ? colors.success : colors.accent}
                     />
                     <Text
                         style={{
                             fontSize: 12,
                             fontWeight: "600",
-                            color: colors.accent,
+                            color: isPeriodNode ? colors.success : colors.accent,
                             letterSpacing: 0.2,
                         }}
                     >
-                        {isIncomeNode ? "Add Expense" : "Add Sub-Budget"}
+                        {
+                            isPeriodNode
+                                ? "Add Income"
+                                : isIncomeNode
+                                    ? "Add Expense"
+                                    : "Add Sub-Expense"
+                        }
                     </Text>
                 </TouchableOpacity>
             )}

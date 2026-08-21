@@ -12,6 +12,7 @@ export type BudgetListCardProps = {
     onEdit?: () => void;
     onDelete?: () => void;
     onAddSubBudget?: () => void;
+    onAddIncome?: () => void;
     onMove?: () => void;
     /** Hierarchy node type — drives Income vs Expense card layout */
     nodeType?: "income" | "expense";

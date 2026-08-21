@@ -33,6 +33,7 @@ export default function BudgetListCard({
     onEdit,
     onDelete,
     onAddSubBudget,
+    onAddIncome,
     onMove,
     nodeType,
     amount,
@@ -265,7 +266,9 @@ export default function BudgetListCard({
                                     added_by={added_by}
                                     date={date}
                                     isIncomeNode={isIncomeNode}
+                                    isPeriodNode={isPeriodNode}
                                     onAddSubBudget={onAddSubBudget}
+                                    onAddIncome={onAddIncome}
                                 />
                             </View>
                         </TouchableOpacity>
