@@ -64,8 +64,8 @@ export default function BudgetListCard({
     const incomeStatusColor = incomeIsOver
         ? colors.error
         : incomePercentage >= 75
-        ? colors.warning
-        : colors.success;
+            ? colors.warning
+            : colors.success;
 
     // ── Period-level (legacy showPercentage path) ─────────────────────────────
     const isOverBudget =
@@ -78,12 +78,12 @@ export default function BudgetListCard({
     const statusColor = isOverBudget
         ? colors.error
         : percentage === null
-        ? colors.accent
-        : percentage >= 100
-        ? colors.error
-        : percentage >= 75
-        ? colors.warning
-        : colors.success;
+            ? colors.accent
+            : percentage >= 100
+                ? colors.error
+                : percentage >= 75
+                    ? colors.warning
+                    : colors.success;
 
     const progressColor = statusColor;
 
@@ -212,16 +212,10 @@ export default function BudgetListCard({
                             onLongPress={onMove}
                             delayLongPress={350}
                             style={{
-                                backgroundColor: isIncomeNode
-                                    ? isDark
-                                        ? "rgba(76,175,80,0.07)"
-                                        : "rgba(67,160,71,0.05)"
-                                    : colors.surface,
+                                backgroundColor: colors.surface,
                                 borderRadius: 18,
                                 borderWidth: 1,
-                                borderColor: isIncomeNode
-                                    ? colors.success + "55"
-                                    : colors.border,
+                                borderColor: colors.border,
                                 overflow: "hidden",
                             }}
                         >
