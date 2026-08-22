@@ -11,8 +11,16 @@ function shortLabel(date: string): string {
     return date.split(" ")[0] ?? date;
 }
 
+function sumSpent(nodes: BudgetPeriod["subBudgets"]): number {
+    return nodes.reduce((sum, node) => {
+        const hasSub = node.subBudgets && node.subBudgets.length > 0;
+        const nodeSpent = (node.spent ?? (node.type !== "income" ? node.amount : 0)) ?? 0;
+        return sum + (hasSub ? sumSpent(node.subBudgets) : nodeSpent);
+    }, 0);
+}
+
 function totalSpent(period: BudgetPeriod): number {
-    return period.subBudgets.reduce((sum, node) => sum + (node.spent ?? 0), 0);
+    return sumSpent(period.subBudgets);
 }
 
 /**
@@ -34,9 +42,19 @@ export function deriveChartPoints(
     const sorted = [...periods].sort((a, b) => a.dateMs - b.dateMs);
     const sliced = sorted.slice(-count);
 
-    return sliced.map((p) => ({
-        label: shortLabel(p.date),
-        spent: totalSpent(p),
-        budget: p.income ?? 0,
-    }));
+    return sliced.map((p) => {
+        const incomeNodeTotal = p.subBudgets
+            .filter((n) => n.type === "income")
+            .reduce((sum, n) => sum + (n.amount ?? 0), 0);
+
+        // Prefer live income-node sum; fall back to legacy `period.income` for
+        // old periods that pre-date the income-node hierarchy.
+        const budget = incomeNodeTotal > 0 ? incomeNodeTotal : (p.income ?? 0);
+
+        return {
+            label: shortLabel(p.date),
+            spent: totalSpent(p),
+            budget,
+        };
+    });
 }

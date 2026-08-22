@@ -70,8 +70,8 @@ export default function BudgetList({
                         income={
                             "income" in budget
                                 ? (budget as BudgetPeriod).subBudgets
-                                      .filter((n) => n.type === "income")
-                                      .reduce((sum, n) => sum + (n.amount ?? 0), 0) || undefined
+                                    .filter((n) => n.type === "income")
+                                    .reduce((sum, n) => sum + (n.amount ?? 0), 0) || undefined
                                 : undefined
                         }
                         onPress={() => onDrillIn(budget)}
