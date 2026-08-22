@@ -138,8 +138,12 @@ export function useBudgetHandlers(
     };
 
     const handleAddSubBudget = (budget: BudgetNode | BudgetPeriod) => {
-        // Drill into this card's context so AddDrawer creates a child of it
-        setNavStack((prev) => [...prev, budget]);
+        // Drill into this card's context so AddDrawer creates a child of it.
+        // Guard: skip the push if this node is already in the stack.
+        setNavStack((prev) => {
+            if (prev.some((item) => item.id === budget.id)) return prev;
+            return [...prev, budget];
+        });
         setShowAddDrawer(true);
     };
 

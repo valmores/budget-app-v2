@@ -25,7 +25,11 @@ export function useBudgetNavigation(): UseBudgetNavigationResult {
     const sectionLabel = navStack.length === 0 ? "All Budgets" : "Sub-Budgets";
 
     const handleDrillIn = (budget: BudgetNode | BudgetPeriod) => {
-        setNavStack((prev) => [...prev, budget]);
+        // Guard: don't push the same node twice (prevents duplicate key in Breadcrumbs)
+        setNavStack((prev) => {
+            if (prev.some((item) => item.id === budget.id)) return prev;
+            return [...prev, budget];
+        });
     };
 
     const handleBack = () => {
