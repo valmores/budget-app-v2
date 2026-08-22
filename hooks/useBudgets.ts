@@ -244,6 +244,51 @@ export function useBudgets() {
     };
 
     /**
+     * Deep-clones a BudgetNode tree into a new location in the hierarchy.
+     *
+     * Recursively creates Firestore documents for each node, awaiting the
+     * new doc ID before cloning its children so parentId stays consistent.
+     *
+     * @param node      The source node (with populated subBudgets)
+     * @param parentId  Firestore id of the destination parent, or null for period root
+     * @param periodId  Firestore id of the destination period
+     * @param order     Position among siblings at the destination
+     */
+    const cloneNodeTree = async (
+        node: BudgetNode,
+        parentId: string | null,
+        periodId: string,
+        order: number
+    ): Promise<void> => {
+        const nodeType = node.type ?? "expense";
+
+        const payload: Record<string, unknown> = {
+            title: node.title,
+            type: nodeType,
+            // Preserve the original date; fall back to now if dateMs is missing
+            date: node.dateMs ? Timestamp.fromMillis(node.dateMs) : Timestamp.now(),
+            added_by: node.added_by,
+            periodId,
+            parentId,
+            order,
+            createdAt: Timestamp.now(),
+        };
+
+        if (nodeType === "income") {
+            payload.amount = node.amount ?? 0;
+        } else {
+            payload.spent = node.spent ?? 0;
+        }
+
+        const docRef = await addDoc(collection(db, "budgetNodes"), payload);
+
+        // Recursively clone each child, ordered by their original index
+        for (let i = 0; i < (node.subBudgets?.length ?? 0); i++) {
+            await cloneNodeTree(node.subBudgets[i], docRef.id, periodId, i);
+        }
+    };
+
+    /**
      * Update a BudgetPeriod or BudgetNode by Firestore document id.
      * `amount` is included so income-node edits (e.g. changing the income limit) persist correctly.
      */
@@ -286,6 +331,7 @@ export function useBudgets() {
         refresh,
         addBudgetPeriod,
         addBudgetNode,
+        cloneNodeTree,
         updateBudget,
         deleteBudget,
     };

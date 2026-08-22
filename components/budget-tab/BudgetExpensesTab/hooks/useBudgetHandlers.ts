@@ -26,7 +26,7 @@ export interface UseBudgetHandlersResult {
     }) => Promise<void>;
     handleAddSubBudget: (budget: BudgetNode | BudgetPeriod) => void;
     handleCardLongPress: (budget: BudgetNode | BudgetPeriod) => void;
-    handleConfirmPaste: () => void;
+    handleConfirmPaste: () => Promise<void>;
     // From useBudgets
     budgets: BudgetPeriod[];
     loading: boolean;
@@ -52,6 +52,7 @@ export function useBudgetHandlers(
         refresh,
         addBudgetPeriod,
         addBudgetNode,
+        cloneNodeTree,
         updateBudget,
         deleteBudget,
     } = useBudgets();
@@ -74,12 +75,21 @@ export function useBudgetHandlers(
         }
     };
 
-    const handleConfirmPaste = () => {
-        if (copiedNode && pasteTarget) {
-            console.log(
-                `[UI Preview] Pasted "${copiedNode.title}" into "${pasteTarget.title}"`
-            );
-        }
+    const handleConfirmPaste = async () => {
+        if (!copiedNode || !pasteTarget) return;
+
+        // Determine where in the hierarchy we're pasting into
+        const isPeriodTarget = "income" in pasteTarget;
+        const periodId = isPeriodTarget
+            ? pasteTarget.id
+            : (pasteTarget as BudgetNode).periodId;
+        const parentId = isPeriodTarget ? null : pasteTarget.id;
+
+        // Append after existing children at the destination
+        const order = pasteTarget.subBudgets?.length ?? 0;
+
+        await cloneNodeTree(copiedNode, parentId, periodId, order);
+
         setPasteTarget(null);
         setCopiedNode(null);
     };
