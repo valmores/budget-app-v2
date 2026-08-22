@@ -69,7 +69,9 @@ export default function BudgetList({
                         showPercentage={isRoot}
                         income={
                             "income" in budget
-                                ? (budget as BudgetPeriod).income
+                                ? (budget as BudgetPeriod).subBudgets
+                                      .filter((n) => n.type === "income")
+                                      .reduce((sum, n) => sum + (n.amount ?? 0), 0) || undefined
                                 : undefined
                         }
                         onPress={() => onDrillIn(budget)}

@@ -51,12 +51,12 @@ export default function SummaryCard({
     // Context-sensitive labels
     const spentLabel =
         nodeType === "income" ? "Expenses" :
-        nodeType === "period" ? "Total Spent" :
-        "Total Spent";
+            nodeType === "period" ? "Total Spent" :
+                "Total Spent";
     const limitLabel =
         nodeType === "income" ? "Income Limit" :
-        nodeType === "period" ? "Total Income" :
-        "Budget";
+            nodeType === "period" ? "Total Income" :
+                "Budget";
 
     return (
         <View
