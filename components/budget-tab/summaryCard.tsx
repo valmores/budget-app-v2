@@ -33,7 +33,7 @@ export default function SummaryCard({
     nodeType = "root",
 }: BudgetListCardProps) {
     const { colors } = useTheme();
-    const [isPrivate, setIsPrivate] = useState(false);
+    const [isPrivate, setIsPrivate] = useState(true);
 
     const remaining = headerLimit - headerSpent;
     const isOverBudget = remaining < 0;
