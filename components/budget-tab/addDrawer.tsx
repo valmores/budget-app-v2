@@ -3,7 +3,7 @@ import { BudgetNode, BudgetPeriod } from "@/types/budget";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { Timestamp } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import { Keyboard, Platform, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Keyboard, Platform, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export type AddDrawerMode = "period" | "income" | "expense";
 
@@ -56,6 +56,7 @@ export default function AddDrawer({ currentParent, mode, colors, setShowAddDrawe
     const [activeInput, setActiveInput] = useState<"title" | "amount" | null>(null);
     const [title, setTitle] = useState("");
     const [amount, setAmount] = useState("");
+    const [hasChildExpenses, setHasChildExpenses] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -91,8 +92,8 @@ export default function AddDrawer({ currentParent, mode, colors, setShowAddDrawe
             setError("Please enter a title.");
             return;
         }
-        const parsed = parseFloat(amount);
-        if (isNaN(parsed) || parsed < 0) {
+        const parsed = hasChildExpenses ? 0 : parseFloat(amount);
+        if (!hasChildExpenses && (isNaN(parsed) || parsed < 0)) {
             setError("Please enter a valid amount.");
             return;
         }
@@ -175,7 +176,7 @@ export default function AddDrawer({ currentParent, mode, colors, setShowAddDrawe
                 )}
 
                 {/* Title */}
-                <View style={{ marginBottom: 12 }}>
+                <View style={{}}>
                     <Text style={{ fontSize: 11, fontWeight: "600", color: colors.accent, marginBottom: 6, letterSpacing: 0.5 }}>
                         {config.titleLabel}
                     </Text>
@@ -204,30 +205,61 @@ export default function AddDrawer({ currentParent, mode, colors, setShowAddDrawe
 
                 {/* Amount */}
                 <View style={{ marginBottom: 12 }}>
-                    <Text style={{ fontSize: 11, fontWeight: "600", color: colors.accent, marginBottom: 6, letterSpacing: 0.5 }}>
-                        {config.amountLabel}
-                    </Text>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: -5 }}>
+                        <Text style={{ fontSize: 11, fontWeight: "600", color: colors.accent, letterSpacing: 0.5 }}>
+                            {config.amountLabel}
+                        </Text>
+                        {mode === "expense" && (
+                            <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                <Text style={{ fontSize: 11, fontWeight: "600", color: colors.textPrimary, letterSpacing: 0.5 }}>
+                                    Disable Amount
+                                </Text>
+                                <Switch
+                                    value={hasChildExpenses}
+                                    onValueChange={(val) => {
+                                        setHasChildExpenses(val);
+                                        if (val) {
+                                            setAmount("0");
+                                        }
+                                    }}
+                                    style={{ transform: [{ scaleX: 0.75 }, { scaleY: 0.75 }] }}
+                                    trackColor={{ false: "#D1D5DB", true: colors.accent }}
+                                    thumbColor="#FFFFFF"
+                                />
+                            </View>
+                        )}
+                    </View>
+                    {hasChildExpenses && (
+                        <Text style={{ fontSize: 11, color: colors.accent, fontStyle: "italic", marginBottom: 15 }}>
+                            💡 Amount is disabled because it will vary on the sum of the child expenses.
+                        </Text>
+                    )}
                     <TextInput
-                        value={amount}
+                        value={hasChildExpenses ? "Disabled" : amount}
                         onChangeText={setAmount}
                         placeholder={config.amountPlaceholder}
                         placeholderTextColor="#9CA3AF"
                         keyboardType="numeric"
+                        editable={!hasChildExpenses}
                         style={{
-                            backgroundColor: colors.surface,
+                            backgroundColor: hasChildExpenses ? (colors.border + "33") : colors.surface,
                             borderWidth: 1,
                             borderColor: colors.border,
                             borderRadius: 12,
                             paddingHorizontal: 16,
                             paddingVertical: 14,
                             fontSize: 16,
-                            color: colors.textPrimary,
+                            color: hasChildExpenses ? "#9CA3AF" : colors.textPrimary,
+                            opacity: hasChildExpenses ? 0.7 : 1,
                         }}
                         onFocus={() => {
-                            setActiveInput("amount");
-                            setDrawerOffset(-220);
+                            if (!hasChildExpenses) {
+                                setActiveInput("amount");
+                                setDrawerOffset(-220);
+                            }
                         }}
                     />
+
                 </View>
 
                 {/* Date */}
