@@ -1,12 +1,13 @@
 import { useTheme } from "@/context/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Modal, Pressable, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, Text, TouchableOpacity, View } from "react-native";
 
 interface PasteConfirmModalProps {
     visible: boolean;
     sourceTitle: string;
     targetTitle: string;
+    isPasting?: boolean;
     onConfirm: () => void;
     onCancel: () => void;
 }
@@ -15,6 +16,7 @@ export default function PasteConfirmModal({
     visible,
     sourceTitle,
     targetTitle,
+    isPasting = false,
     onConfirm,
     onCancel,
 }: PasteConfirmModalProps) {
@@ -25,7 +27,7 @@ export default function PasteConfirmModal({
             visible={visible}
             transparent
             animationType="fade"
-            onRequestClose={onCancel}
+            onRequestClose={isPasting ? undefined : onCancel}
         >
             <Pressable
                 style={{
@@ -35,7 +37,7 @@ export default function PasteConfirmModal({
                     alignItems: "center",
                     padding: 28,
                 }}
-                onPress={onCancel}
+                onPress={isPasting ? undefined : onCancel}
             >
                 <Pressable
                     style={{
@@ -97,6 +99,7 @@ export default function PasteConfirmModal({
                     <View style={{ flexDirection: "row", gap: 12 }}>
                         <TouchableOpacity
                             onPress={onCancel}
+                            disabled={isPasting}
                             style={{
                                 flex: 1,
                                 paddingVertical: 13,
@@ -104,6 +107,7 @@ export default function PasteConfirmModal({
                                 borderWidth: 1,
                                 borderColor: colors.border,
                                 alignItems: "center",
+                                opacity: isPasting ? 0.5 : 1,
                             }}
                         >
                             <Text style={{ fontSize: 15, fontWeight: "600", color: colors.textPrimary }}>
@@ -113,17 +117,24 @@ export default function PasteConfirmModal({
 
                         <TouchableOpacity
                             onPress={onConfirm}
+                            disabled={isPasting}
                             style={{
                                 flex: 1.2,
                                 paddingVertical: 13,
                                 borderRadius: 12,
                                 backgroundColor: colors.accent,
                                 alignItems: "center",
+                                justifyContent: "center",
+                                opacity: isPasting ? 0.8 : 1,
                             }}
                         >
-                            <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>
-                                Paste Here
-                            </Text>
+                            {isPasting ? (
+                                <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                                <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>
+                                    Paste Here
+                                </Text>
+                            )}
                         </TouchableOpacity>
                     </View>
                 </Pressable>
@@ -131,3 +142,4 @@ export default function PasteConfirmModal({
         </Modal>
     );
 }
+

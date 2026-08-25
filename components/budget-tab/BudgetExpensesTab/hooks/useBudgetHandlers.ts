@@ -14,6 +14,7 @@ export interface UseBudgetHandlersResult {
     setCopiedNode: React.Dispatch<React.SetStateAction<BudgetNode | null>>;
     pasteTarget: BudgetNode | BudgetPeriod | null;
     setPasteTarget: React.Dispatch<React.SetStateAction<BudgetNode | BudgetPeriod | null>>;
+    isPasting: boolean;
     // Handlers
     handleEdit: (budget: BudgetNode | BudgetPeriod) => void;
     handleSaveEdit: (updated: BudgetUpdate) => Promise<void>;
@@ -43,6 +44,7 @@ export function useBudgetHandlers(
     const [editTarget, setEditTarget] = useState<BudgetNode | BudgetPeriod | null>(null);
     const [copiedNode, setCopiedNode] = useState<BudgetNode | null>(null);
     const [pasteTarget, setPasteTarget] = useState<BudgetNode | BudgetPeriod | null>(null);
+    const [isPasting, setIsPasting] = useState(false);
 
     const {
         budgets,
@@ -78,20 +80,26 @@ export function useBudgetHandlers(
     const handleConfirmPaste = async () => {
         if (!copiedNode || !pasteTarget) return;
 
-        // Determine where in the hierarchy we're pasting into
-        const isPeriodTarget = "income" in pasteTarget;
-        const periodId = isPeriodTarget
-            ? pasteTarget.id
-            : (pasteTarget as BudgetNode).periodId;
-        const parentId = isPeriodTarget ? null : pasteTarget.id;
+        try {
+            setIsPasting(true);
+            // Determine where in the hierarchy we're pasting into
+            const isPeriodTarget = "income" in pasteTarget;
+            const periodId = isPeriodTarget
+                ? pasteTarget.id
+                : (pasteTarget as BudgetNode).periodId;
+            const parentId = isPeriodTarget ? null : pasteTarget.id;
 
-        // Append after existing children at the destination
-        const order = pasteTarget.subBudgets?.length ?? 0;
+            // Append after existing children at the destination
+            const order = pasteTarget.subBudgets?.length ?? 0;
 
-        await cloneNodeTree(copiedNode, parentId, periodId, order);
-
-        setPasteTarget(null);
-        setCopiedNode(null);
+            await cloneNodeTree(copiedNode, parentId, periodId, order);
+        } catch (err) {
+            console.error("Failed to paste budget node:", err);
+        } finally {
+            setIsPasting(false);
+            setPasteTarget(null);
+            setCopiedNode(null);
+        }
     };
 
     const handleSaveEdit = async (updated: BudgetUpdate) => {
@@ -209,6 +217,7 @@ export function useBudgetHandlers(
         setCopiedNode,
         pasteTarget,
         setPasteTarget,
+        isPasting,
         handleEdit,
         handleSaveEdit,
         handleDelete,

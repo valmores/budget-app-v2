@@ -44,6 +44,7 @@ export default function BudgetExpensesTab() {
         setCopiedNode,
         pasteTarget,
         setPasteTarget,
+        isPasting,
         handleEdit,
         handleSaveEdit,
         handleDelete,
@@ -199,8 +200,9 @@ export default function BudgetExpensesTab() {
                     visible={true}
                     sourceTitle={copiedNode.title}
                     targetTitle={pasteTarget.title}
+                    isPasting={isPasting}
                     onConfirm={handleConfirmPaste}
-                    onCancel={() => setPasteTarget(null)}
+                    onCancel={() => !isPasting && setPasteTarget(null)}
                 />
             )}
         </View>
