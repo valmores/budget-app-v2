@@ -56,6 +56,7 @@ export default function AddDrawer({ currentParent, mode, colors, setShowAddDrawe
     const [activeInput, setActiveInput] = useState<"title" | "amount" | null>(null);
     const [title, setTitle] = useState("");
     const [amount, setAmount] = useState("");
+    const [quantity, setQuantity] = useState(1);
     const [hasChildExpenses, setHasChildExpenses] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -92,7 +93,8 @@ export default function AddDrawer({ currentParent, mode, colors, setShowAddDrawe
             setError("Please enter a title.");
             return;
         }
-        const parsed = hasChildExpenses ? 0 : parseFloat(amount);
+        const baseAmount = parseFloat(amount);
+        const parsed = hasChildExpenses ? 0 : (isNaN(baseAmount) ? 0 : baseAmount * quantity);
         if (!hasChildExpenses && (isNaN(parsed) || parsed < 0)) {
             setError("Please enter a valid amount.");
             return;
@@ -234,32 +236,108 @@ export default function AddDrawer({ currentParent, mode, colors, setShowAddDrawe
                             💡 Amount is disabled because it will vary on the sum of the child expenses.
                         </Text>
                     )}
-                    <TextInput
-                        value={hasChildExpenses ? "Disabled" : amount}
-                        onChangeText={setAmount}
-                        placeholder={config.amountPlaceholder}
-                        placeholderTextColor="#9CA3AF"
-                        keyboardType="numeric"
-                        editable={!hasChildExpenses}
-                        style={{
-                            backgroundColor: hasChildExpenses ? (colors.border + "33") : colors.surface,
-                            borderWidth: 1,
-                            borderColor: colors.border,
-                            borderRadius: 12,
-                            paddingHorizontal: 16,
-                            paddingVertical: 14,
-                            fontSize: 16,
-                            color: hasChildExpenses ? "#9CA3AF" : colors.textPrimary,
-                            opacity: hasChildExpenses ? 0.7 : 1,
-                        }}
-                        onFocus={() => {
-                            if (!hasChildExpenses) {
-                                setActiveInput("amount");
-                                setDrawerOffset(-220);
-                            }
-                        }}
-                    />
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                        <TextInput
+                            value={hasChildExpenses ? "Disabled" : amount}
+                            onChangeText={setAmount}
+                            placeholder={config.amountPlaceholder}
+                            placeholderTextColor="#9CA3AF"
+                            keyboardType="numeric"
+                            editable={!hasChildExpenses}
+                            style={{
+                                flex: 1,
+                                backgroundColor: hasChildExpenses ? (colors.border + "33") : colors.surface,
+                                borderWidth: 1,
+                                borderColor: colors.border,
+                                borderRadius: 12,
+                                paddingHorizontal: 16,
+                                paddingVertical: 14,
+                                fontSize: 16,
+                                color: hasChildExpenses ? "#9CA3AF" : colors.textPrimary,
+                                opacity: hasChildExpenses ? 0.7 : 1,
+                            }}
+                            onFocus={() => {
+                                if (!hasChildExpenses) {
+                                    setActiveInput("amount");
+                                    setDrawerOffset(-220);
+                                }
+                            }}
+                        />
 
+                        <TouchableOpacity
+                            disabled={hasChildExpenses}
+                            onPress={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                            style={{
+                                width: 38,
+                                height: 50,
+                                borderRadius: 12,
+                                borderWidth: 1,
+                                borderColor: colors.border,
+                                backgroundColor: colors.surface,
+                                justifyContent: "center",
+                                alignItems: "center",
+                                opacity: hasChildExpenses ? 0.5 : 1,
+                            }}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={{ fontSize: 20, fontWeight: "600", color: colors.textPrimary }}>-</Text>
+                        </TouchableOpacity>
+
+                        <View
+                            style={{
+                                minWidth: 42,
+                                height: 50,
+                                paddingHorizontal: 8,
+                                borderRadius: 12,
+                                borderWidth: 1,
+                                borderColor: colors.border,
+                                backgroundColor: colors.surface,
+                                justifyContent: "center",
+                                alignItems: "center",
+                                opacity: hasChildExpenses ? 0.5 : 1,
+                            }}
+                        >
+                            <TextInput
+                                value={String(quantity)}
+                                onChangeText={(val) => {
+                                    const parsedVal = parseInt(val, 10);
+                                    if (!isNaN(parsedVal) && parsedVal >= 1) {
+                                        setQuantity(parsedVal);
+                                    } else if (val === "") {
+                                        setQuantity(1);
+                                    }
+                                }}
+                                keyboardType="numeric"
+                                editable={!hasChildExpenses}
+                                style={{
+                                    fontSize: 16,
+                                    fontWeight: "600",
+                                    color: colors.textPrimary,
+                                    textAlign: "center",
+                                    padding: 0,
+                                }}
+                            />
+                        </View>
+
+                        <TouchableOpacity
+                            disabled={hasChildExpenses}
+                            onPress={() => setQuantity((prev) => prev + 1)}
+                            style={{
+                                width: 38,
+                                height: 50,
+                                borderRadius: 12,
+                                borderWidth: 1,
+                                borderColor: colors.border,
+                                backgroundColor: colors.surface,
+                                justifyContent: "center",
+                                alignItems: "center",
+                                opacity: hasChildExpenses ? 0.5 : 1,
+                            }}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={{ fontSize: 20, fontWeight: "600", color: colors.textPrimary }}>+</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Date */}
