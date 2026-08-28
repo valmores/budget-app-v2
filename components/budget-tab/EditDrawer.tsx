@@ -1,9 +1,10 @@
 import { useAuth } from "@/context/AuthContext";
 import { BudgetNode, BudgetPeriod, BudgetUpdate } from "@/types/budget";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { Timestamp } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import { Keyboard, Platform, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Keyboard, Text, TextInput, TouchableOpacity, View } from "react-native";
+import AmountField from "./drawers/AmountField";
+import DatePickerField from "./drawers/DatePickerField";
 
 interface EditDrawerProps {
     budget: BudgetNode | BudgetPeriod;
@@ -26,40 +27,31 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
     const [title, setTitle] = useState(budget.title);
     const [amount, setAmount] = useState(() => {
         if ("income" in budget) {
-            // BudgetPeriod – legacy income field
             return String((budget as BudgetPeriod).income ?? "");
         }
         const node = budget as BudgetNode;
-        // Income node stores its limit in `amount`, expense node stores in `spent`
         return node.type === "income"
             ? String(node.amount ?? "")
             : String(node.spent ?? "");
     });
+    const [quantity, setQuantity] = useState(1);
 
-    // True for BudgetPeriod rows (legacy) OR income-type BudgetNodes
     const isIncomeBudget = "income" in budget;
     const isIncomeNode = !isIncomeBudget && (budget as BudgetNode).type === "income";
 
-    // Derive a readable label for the amount field
     const amountLabel = isIncomeBudget || isIncomeNode ? "INCOME AMOUNT" : "SPENT AMOUNT";
     const amountPlaceholder = isIncomeBudget || isIncomeNode ? "Enter income amount" : "Enter spent amount";
 
-    // Derive the drawer title
     const drawerTitle = isIncomeBudget
         ? "Edit Budget Period"
         : isIncomeNode
             ? "Edit Income Source"
             : "Edit Expense";
 
-    // Parse the display string (e.g. "Jun 30, 2026") back into a Date for the picker.
     const [selectedDate, setSelectedDate] = useState<Date>(() => {
         const parsed = new Date(budget.date);
         return isNaN(parsed.getTime()) ? new Date() : parsed;
     });
-    const [showDatePicker, setShowDatePicker] = useState(false);
-
-    const formatDate = (date: Date) =>
-        date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
     useEffect(() => {
         const show = Keyboard.addListener("keyboardDidShow", () => {
@@ -81,22 +73,19 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
     }, [activeInput]);
 
     const handleSave = () => {
-        const parsed = parseFloat(amount);
+        const baseAmount = parseFloat(amount);
         const update: BudgetUpdate = {
             title,
             added_by: user?.email ?? "unknown",
             date: Timestamp.fromDate(selectedDate),
         };
-        if (!isNaN(parsed)) {
+        if (!isNaN(baseAmount)) {
             if (isIncomeBudget) {
-                // BudgetPeriod: update legacy income field
-                (update as Partial<BudgetPeriod>).income = parsed;
+                (update as Partial<BudgetPeriod>).income = baseAmount;
             } else if (isIncomeNode) {
-                // Income BudgetNode: update the `amount` (income limit) field
-                (update as Partial<BudgetNode>).amount = parsed;
+                (update as Partial<BudgetNode>).amount = baseAmount;
             } else {
-                // Expense BudgetNode: update the `spent` field
-                (update as Partial<BudgetNode>).spent = parsed;
+                (update as Partial<BudgetNode>).spent = baseAmount * quantity;
             }
         }
         onSave(update);
@@ -162,7 +151,7 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
                         style={{
                             fontSize: 12,
                             fontWeight: "600",
-                            color: colors.textSecondary,
+                            color: colors.accent,
                             marginBottom: 6,
                             letterSpacing: 0.5,
                         }}
@@ -193,93 +182,38 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
                 </View>
 
                 {/* Amount input */}
-                <View style={{ marginBottom: 12 }}>
-                    <Text
-                        style={{
-                            fontSize: 12,
-                            fontWeight: "600",
-                            color: colors.textSecondary,
-                            marginBottom: 6,
-                            letterSpacing: 0.5,
-                        }}
-                    >
-                        {amountLabel}
-                    </Text>
-                    <TextInput
-                        value={amount}
-                        onChangeText={setAmount}
-                        placeholder={amountPlaceholder}
-                        placeholderTextColor="#9CA3AF"
-                        keyboardType="numeric"
-                        style={{
-                            backgroundColor: colors.surface,
-                            borderWidth: 1,
-                            borderColor: colors.border,
-                            borderRadius: 12,
-                            paddingHorizontal: 16,
-                            paddingVertical: 14,
-                            fontSize: 16,
-                            color: colors.textPrimary,
-                        }}
-                        onFocus={() => {
-                            setActiveInput("amount");
-                            setDrawerOffset(-220);
-                        }}
-                    />
-                </View>
+                <AmountField
+                    label={amountLabel}
+                    placeholder={amountPlaceholder}
+                    amount={amount}
+                    onChangeAmount={setAmount}
+                    {...(!isIncomeBudget && !isIncomeNode && {
+                        quantity,
+                        onChangeQuantity: setQuantity,
+                    })}
+                    colors={{
+                        surface: colors.surface,
+                        textPrimary: colors.textPrimary,
+                        accent: colors.accent,
+                        border: colors.border,
+                    }}
+                    onFocus={() => {
+                        setActiveInput("amount");
+                        setDrawerOffset(-220);
+                    }}
+                />
 
                 {/* Date */}
-                <View style={{ marginBottom: 12 }}>
-                    <Text
-                        style={{
-                            fontSize: 12,
-                            fontWeight: "600",
-                            color: colors.textSecondary,
-                            marginBottom: 6,
-                            letterSpacing: 0.5,
-                        }}
-                    >
-                        DATE
-                    </Text>
-                    <TouchableOpacity
-                        onPress={() => setShowDatePicker((prev) => !prev)}
-                        style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            backgroundColor: colors.surface,
-                            borderWidth: 1,
-                            borderColor: showDatePicker ? colors.accent : colors.border,
-                            borderRadius: 12,
-                            paddingHorizontal: 16,
-                            paddingVertical: 14,
-                            gap: 10,
-                        }}
-                    >
-                        <Text style={{ flex: 1, fontSize: 16, color: colors.textPrimary }}>
-                            {formatDate(selectedDate)}
-                        </Text>
-                        <Text style={{ fontSize: 13, color: colors.accent, fontWeight: "600" }}>
-                            {showDatePicker ? "Done" : "Change"}
-                        </Text>
-                    </TouchableOpacity>
-
-                    {showDatePicker && (
-                        <DateTimePicker
-                            value={selectedDate}
-                            mode="date"
-                            display={Platform.OS === "ios" ? "inline" : "default"}
-                            maximumDate={new Date()}
-                            onChange={(_event: DateTimePickerEvent, date?: Date) => {
-                                if (Platform.OS === "android") {
-                                    setShowDatePicker(false);
-                                }
-                                if (date) {
-                                    setSelectedDate(date);
-                                }
-                            }}
-                        />
-                    )}
-                </View>
+                <DatePickerField
+                    selectedDate={selectedDate}
+                    onChangeDate={setSelectedDate}
+                    colors={{
+                        surface: colors.surface,
+                        textPrimary: colors.textPrimary,
+                        accent: colors.accent,
+                        border: colors.border,
+                    }}
+                />
 
                 {/* Save button */}
                 <TouchableOpacity

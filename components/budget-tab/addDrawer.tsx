@@ -1,9 +1,10 @@
 import { useAuth } from "@/context/AuthContext";
 import { BudgetNode, BudgetPeriod } from "@/types/budget";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { Timestamp } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import { Keyboard, Platform, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Keyboard, Text, TextInput, TouchableOpacity, View } from "react-native";
+import AmountField from "./drawers/AmountField";
+import DatePickerField from "./drawers/DatePickerField";
 
 export type AddDrawerMode = "period" | "income" | "expense";
 
@@ -59,12 +60,8 @@ export default function AddDrawer({ currentParent, mode, colors, setShowAddDrawe
     const [quantity, setQuantity] = useState(1);
     const [hasChildExpenses, setHasChildExpenses] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-    const [showDatePicker, setShowDatePicker] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    const formatDate = (date: Date) =>
-        date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
     const config = MODE_CONFIG[mode];
 
@@ -88,7 +85,6 @@ export default function AddDrawer({ currentParent, mode, colors, setShowAddDrawe
     }, [activeInput]);
 
     const handleSave = async () => {
-        // Validation
         if (!title.trim()) {
             setError("Please enter a title.");
             return;
@@ -178,7 +174,7 @@ export default function AddDrawer({ currentParent, mode, colors, setShowAddDrawe
                 )}
 
                 {/* Title */}
-                <View style={{}}>
+                <View style={{ marginBottom: 12 }}>
                     <Text style={{ fontSize: 11, fontWeight: "600", color: colors.accent, marginBottom: 6, letterSpacing: 0.5 }}>
                         {config.titleLabel}
                     </Text>
@@ -206,185 +202,32 @@ export default function AddDrawer({ currentParent, mode, colors, setShowAddDrawe
                 </View>
 
                 {/* Amount */}
-                <View style={{ marginBottom: 12 }}>
-                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: -5 }}>
-                        <Text style={{ fontSize: 11, fontWeight: "600", color: colors.accent, letterSpacing: 0.5 }}>
-                            {config.amountLabel}
-                        </Text>
-                        {mode === "expense" && (
-                            <View style={{ flexDirection: "row", alignItems: "center" }}>
-                                <Text style={{ fontSize: 11, fontWeight: "600", color: colors.textPrimary, letterSpacing: 0.5 }}>
-                                    Disable Amount
-                                </Text>
-                                <Switch
-                                    value={hasChildExpenses}
-                                    onValueChange={(val) => {
-                                        setHasChildExpenses(val);
-                                        if (val) {
-                                            setAmount("0");
-                                        }
-                                    }}
-                                    style={{ transform: [{ scaleX: 0.75 }, { scaleY: 0.75 }] }}
-                                    trackColor={{ false: "#D1D5DB", true: colors.accent }}
-                                    thumbColor="#FFFFFF"
-                                />
-                            </View>
-                        )}
-                    </View>
-                    {hasChildExpenses && (
-                        <Text style={{ fontSize: 11, color: colors.accent, fontStyle: "italic", marginBottom: 15 }}>
-                            💡 Amount is disabled because it will vary on the sum of the child expenses.
-                        </Text>
-                    )}
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                        <TextInput
-                            value={hasChildExpenses ? "Disabled" : amount}
-                            onChangeText={setAmount}
-                            placeholder={config.amountPlaceholder}
-                            placeholderTextColor="#9CA3AF"
-                            keyboardType="numeric"
-                            editable={!hasChildExpenses}
-                            style={{
-                                flex: 1,
-                                backgroundColor: hasChildExpenses ? (colors.border + "33") : colors.surface,
-                                borderWidth: 1,
-                                borderColor: colors.border,
-                                borderRadius: 12,
-                                paddingHorizontal: 16,
-                                paddingVertical: 14,
-                                fontSize: 16,
-                                color: hasChildExpenses ? "#9CA3AF" : colors.textPrimary,
-                                opacity: hasChildExpenses ? 0.7 : 1,
-                            }}
-                            onFocus={() => {
-                                if (!hasChildExpenses) {
-                                    setActiveInput("amount");
-                                    setDrawerOffset(-220);
-                                }
-                            }}
-                        />
-
-                        <TouchableOpacity
-                            disabled={hasChildExpenses}
-                            onPress={() => setQuantity((prev) => Math.max(1, prev - 1))}
-                            style={{
-                                width: 38,
-                                height: 50,
-                                borderRadius: 12,
-                                borderWidth: 1,
-                                borderColor: colors.border,
-                                backgroundColor: colors.surface,
-                                justifyContent: "center",
-                                alignItems: "center",
-                                opacity: hasChildExpenses ? 0.5 : 1,
-                            }}
-                            activeOpacity={0.7}
-                        >
-                            <Text style={{ fontSize: 20, fontWeight: "600", color: colors.textPrimary }}>-</Text>
-                        </TouchableOpacity>
-
-                        <View
-                            style={{
-                                minWidth: 42,
-                                height: 50,
-                                paddingHorizontal: 8,
-                                borderRadius: 12,
-                                borderWidth: 1,
-                                borderColor: colors.border,
-                                backgroundColor: colors.surface,
-                                justifyContent: "center",
-                                alignItems: "center",
-                                opacity: hasChildExpenses ? 0.5 : 1,
-                            }}
-                        >
-                            <TextInput
-                                value={String(quantity)}
-                                onChangeText={(val) => {
-                                    const parsedVal = parseInt(val, 10);
-                                    if (!isNaN(parsedVal) && parsedVal >= 1) {
-                                        setQuantity(parsedVal);
-                                    } else if (val === "") {
-                                        setQuantity(1);
-                                    }
-                                }}
-                                keyboardType="numeric"
-                                editable={!hasChildExpenses}
-                                style={{
-                                    fontSize: 16,
-                                    fontWeight: "600",
-                                    color: colors.textPrimary,
-                                    textAlign: "center",
-                                    padding: 0,
-                                }}
-                            />
-                        </View>
-
-                        <TouchableOpacity
-                            disabled={hasChildExpenses}
-                            onPress={() => setQuantity((prev) => prev + 1)}
-                            style={{
-                                width: 38,
-                                height: 50,
-                                borderRadius: 12,
-                                borderWidth: 1,
-                                borderColor: colors.border,
-                                backgroundColor: colors.surface,
-                                justifyContent: "center",
-                                alignItems: "center",
-                                opacity: hasChildExpenses ? 0.5 : 1,
-                            }}
-                            activeOpacity={0.7}
-                        >
-                            <Text style={{ fontSize: 20, fontWeight: "600", color: colors.textPrimary }}>+</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
+                <AmountField
+                    label={config.amountLabel}
+                    placeholder={config.amountPlaceholder}
+                    amount={amount}
+                    onChangeAmount={setAmount}
+                    quantity={quantity}
+                    onChangeQuantity={setQuantity}
+                    showDisableSwitch={mode === "expense"}
+                    hasChildExpenses={hasChildExpenses}
+                    onToggleHasChildExpenses={(val) => {
+                        setHasChildExpenses(val);
+                        if (val) setAmount("0");
+                    }}
+                    colors={colors}
+                    onFocus={() => {
+                        setActiveInput("amount");
+                        setDrawerOffset(-220);
+                    }}
+                />
 
                 {/* Date */}
-                <View style={{ marginBottom: 12 }}>
-                    <Text style={{ fontSize: 11, fontWeight: "600", color: colors.accent, marginBottom: 6, letterSpacing: 0.5 }}>
-                        DATE
-                    </Text>
-                    <TouchableOpacity
-                        onPress={() => setShowDatePicker((prev) => !prev)}
-                        style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            backgroundColor: colors.surface,
-                            borderWidth: 1,
-                            borderColor: showDatePicker ? colors.accent : colors.border,
-                            borderRadius: 12,
-                            paddingHorizontal: 16,
-                            paddingVertical: 14,
-                            gap: 10,
-                        }}
-                    >
-                        {/* <Text style={{ fontSize: 18, color: colors.accent }}>📅</Text> */}
-                        <Text style={{ flex: 1, fontSize: 16, color: colors.textPrimary }}>
-                            {formatDate(selectedDate)}
-                        </Text>
-                        <Text style={{ fontSize: 13, color: colors.accent, fontWeight: "600" }}>
-                            {showDatePicker ? "Done" : "Change"}
-                        </Text>
-                    </TouchableOpacity>
-
-                    {showDatePicker && (
-                        <DateTimePicker
-                            value={selectedDate}
-                            mode="date"
-                            display={Platform.OS === "ios" ? "inline" : "default"}
-                            maximumDate={new Date()}
-                            onChange={(_event: DateTimePickerEvent, date?: Date) => {
-                                if (Platform.OS === "android") {
-                                    setShowDatePicker(false);
-                                }
-                                if (date) {
-                                    setSelectedDate(date);
-                                }
-                            }}
-                        />
-                    )}
-                </View>
+                <DatePickerField
+                    selectedDate={selectedDate}
+                    onChangeDate={setSelectedDate}
+                    colors={colors}
+                />
 
                 {/* Save button */}
                 <TouchableOpacity
@@ -404,5 +247,5 @@ export default function AddDrawer({ currentParent, mode, colors, setShowAddDrawe
                 </TouchableOpacity>
             </View>
         </View>
-    );
+    )
 }
