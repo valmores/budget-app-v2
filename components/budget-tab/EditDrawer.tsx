@@ -30,11 +30,20 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
             return String((budget as BudgetPeriod).income ?? "");
         }
         const node = budget as BudgetNode;
-        return node.type === "income"
-            ? String(node.amount ?? "")
-            : String(node.spent ?? "");
+        if (node.type === "income") {
+            return String(node.amount ?? "");
+        }
+        // Expense node: show price-per-unit so the user edits the unit price,
+        // not the already-multiplied total. Back-calculate: pricePerUnit = spent / quantity.
+        const qty = node.quantity ?? 1;
+        const pricePerUnit = qty > 1 ? (node.spent ?? 0) / qty : (node.spent ?? 0);
+        return String(pricePerUnit);
     });
-    const [quantity, setQuantity] = useState(1);
+    const [quantity, setQuantity] = useState(() => {
+        if ("income" in budget) return 1;
+        const node = budget as BudgetNode;
+        return node.type === "income" ? 1 : (node.quantity ?? 1);
+    });
 
     const isIncomeBudget = "income" in budget;
     const isIncomeNode = !isIncomeBudget && (budget as BudgetNode).type === "income";
@@ -86,6 +95,7 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
                 (update as Partial<BudgetNode>).amount = baseAmount;
             } else {
                 (update as Partial<BudgetNode>).spent = baseAmount * quantity;
+                (update as Partial<BudgetNode>).quantity = quantity; // persist unit count
             }
         }
         onSave(update);
