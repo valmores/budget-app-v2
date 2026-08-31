@@ -8,6 +8,7 @@ export type BudgetNode = {
     type?: NodeType;         // "income" or "expense" (defaults to "expense" for legacy nodes)
     amount?: number;         // Income Node: Total Income Amount / Limit
     spent?: number;          // Expense Node: Actual Amount Spent
+    quantity?: number;       // Expense Node: Number of units purchased (defaults to 1 if absent)
     date: string;           // display string e.g. "Jun 30, 2026"
     dateMs: number;         // epoch ms from the user-picked date — use this for sorting
     added_by: string;
