@@ -24,6 +24,7 @@ export interface UseBudgetHandlersResult {
         amount: number;
         added_by: string;
         date: Timestamp;
+        quantity: number;
     }) => Promise<void>;
     handleAddSubBudget: (budget: BudgetNode | BudgetPeriod) => void;
     handleCardLongPress: (budget: BudgetNode | BudgetPeriod) => void;
@@ -116,6 +117,8 @@ export function useBudgetHandlers(
             firestoreUpdates.spent = updated.spent;
         if (!isPeriod && updated.amount !== undefined)
             firestoreUpdates.amount = updated.amount;
+        if (!isPeriod && (updated as any).quantity !== undefined)
+            firestoreUpdates.quantity = (updated as any).quantity;
         if (updated.added_by !== undefined)
             firestoreUpdates.added_by = updated.added_by;
         if (updated.date !== undefined) firestoreUpdates.date = updated.date;
@@ -160,6 +163,7 @@ export function useBudgetHandlers(
         amount: number;
         added_by: string;
         date: Timestamp;
+        quantity: number;
     }) => {
         if (!currentParent) {
             // Root level → add a BudgetPeriod
@@ -197,6 +201,7 @@ export function useBudgetHandlers(
                     {
                         title: data.title,
                         spent: data.amount,
+                        quantity: data.quantity, // persist unit count
                         type: "expense",
                         date: data.date,
                         added_by: data.added_by,

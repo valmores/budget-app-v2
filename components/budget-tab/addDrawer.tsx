@@ -18,6 +18,7 @@ interface AddDrawerProps {
         amount: number;
         added_by: string;
         date: Timestamp;
+        quantity: number;
     }) => Promise<void>;
 }
 
@@ -104,6 +105,7 @@ export default function AddDrawer({ currentParent, mode, colors, setShowAddDrawe
                 amount: parsed,
                 added_by: user?.email ?? "unknown",
                 date: Timestamp.fromDate(selectedDate),
+                quantity,
             });
             setShowAddDrawer(false);
         } catch (e: any) {
