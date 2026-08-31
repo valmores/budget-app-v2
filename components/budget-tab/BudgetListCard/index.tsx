@@ -37,6 +37,7 @@ export default function BudgetListCard({
     onMove,
     nodeType,
     amount,
+    quantity,
 }: BudgetListCardProps) {
     const { colors, isDark } = useTheme();
     const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
@@ -252,6 +253,8 @@ export default function BudgetListCard({
                                         percentage={percentage}
                                         statusColor={statusColor}
                                         progressColor={progressColor}
+                                        quantity={!hasSubBudgets ? (quantity ?? 1) : undefined}
+                                        pricePerUnit={!hasSubBudgets && (quantity ?? 1) > 1 ? displaySpent / (quantity ?? 1) : undefined}
                                     />
                                 )}
 

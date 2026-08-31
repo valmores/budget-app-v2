@@ -10,6 +10,10 @@ type ExpenseAmountRowProps = {
     percentage: number | null;
     statusColor: string;
     progressColor: string;
+    /** Expense only: number of units (undefined = don't show) */
+    quantity?: number;
+    /** Expense only: price per unit (undefined = don't show) */
+    pricePerUnit?: number;
 };
 
 export default function ExpenseAmountRow({
@@ -19,6 +23,8 @@ export default function ExpenseAmountRow({
     percentage,
     statusColor,
     progressColor,
+    quantity,
+    pricePerUnit,
 }: ExpenseAmountRowProps) {
     const { colors, isDark } = useTheme();
 
@@ -43,6 +49,17 @@ export default function ExpenseAmountRow({
                 >
                     ₱{displaySpent.toLocaleString()}
                 </Text>
+                {/* Quantity × price-per-unit breakdown — only for leaf expense nodes with qty > 1 */}
+                {quantity !== undefined && quantity > 1 && pricePerUnit !== undefined && (
+                    <Text
+                        style={{
+                            fontSize: 12,
+                            color: colors.textMuted,
+                        }}
+                    >
+                        {quantity}x ₱{pricePerUnit.toLocaleString()}
+                    </Text>
+                )}
                 {income != null && (
                     <Text
                         style={{

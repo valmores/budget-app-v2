@@ -18,6 +18,8 @@ export type BudgetListCardProps = {
     nodeType?: "income" | "expense";
     /** Income Node: total income limit / budget ceiling */
     amount?: number;
+    /** Expense Node: number of units purchased (defaults to 1) */
+    quantity?: number;
 };
 
 export const calculateTotalSpent = (nodes: BudgetNode[]): number => {

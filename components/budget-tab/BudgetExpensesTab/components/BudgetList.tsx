@@ -81,6 +81,7 @@ export default function BudgetList({
                         onMove={() => onMove(budget)}
                         nodeType={node?.type}
                         amount={node?.amount}
+                        quantity={node?.quantity}
                     />
                 );
             })}
