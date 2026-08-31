@@ -146,6 +146,7 @@ export function useBudgets() {
                         type: data.type ?? "expense", // default to "expense" for legacy nodes
                         amount: isIncome ? (data.amount ?? data.spent) : data.amount, // income node limit
                         spent: isIncome ? undefined : (data.spent ?? data.amount), // expense node spent
+                        quantity: isIncome ? undefined : (data.quantity ?? 1), // expense node unit count; default 1 for legacy docs
                         date: formatTimestamp(data.date),
                         dateMs: ts instanceof Timestamp ? ts.toMillis() : 0,
                         added_by: data.added_by,
@@ -205,6 +206,7 @@ export function useBudgets() {
             type?: "income" | "expense";
             amount?: number;   // income node: total income limit
             spent?: number;    // expense node: actual amount spent
+            quantity?: number; // expense node: number of units purchased
             date: Timestamp;
             added_by: string;
         },
@@ -237,6 +239,7 @@ export function useBudgets() {
         } else {
             // Expense node: actual spend stored in `spent`
             payload.spent = data.spent ?? 0;
+            payload.quantity = data.quantity ?? 1; // persist unit count; default 1
             // Do NOT write `amount` for expense nodes
         }
 
@@ -294,7 +297,7 @@ export function useBudgets() {
      */
     const updateBudget = async (
         id: string,
-        updates: Partial<{ title: string; income: number; amount: number; spent: number; added_by: string; date: Timestamp }>,
+        updates: Partial<{ title: string; income: number; amount: number; spent: number; quantity: number; added_by: string; date: Timestamp }>,
         isPeriod: boolean
     ) => {
         const colName = isPeriod ? "budgetPeriods" : "budgetNodes";
