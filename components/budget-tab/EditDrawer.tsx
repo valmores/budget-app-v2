@@ -58,6 +58,7 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
             : "Edit Expense";
 
     const [selectedDate, setSelectedDate] = useState<Date>(() => {
+        if (budget.dateMs) return new Date(budget.dateMs);
         const parsed = new Date(budget.date);
         return isNaN(parsed.getTime()) ? new Date() : parsed;
     });
