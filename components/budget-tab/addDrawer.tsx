@@ -2,7 +2,7 @@ import { useAuth } from "@/context/AuthContext";
 import { BudgetNode, BudgetPeriod } from "@/types/budget";
 import { Timestamp } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import { Keyboard, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Keyboard, Text, TextInput, TouchableOpacity, View } from "react-native";
 import AmountField from "./drawers/AmountField";
 import DatePickerField from "./drawers/DatePickerField";
 
@@ -243,9 +243,11 @@ export default function AddDrawer({ currentParent, mode, colors, setShowAddDrawe
                         marginTop: 16,
                     }}
                 >
-                    <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
-                        {saving ? "Saving…" : "Add"}
-                    </Text>
+                    {saving ? (
+                        <ActivityIndicator color="#fff" />
+                    ) : (
+                        <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>Add</Text>
+                    )}
                 </TouchableOpacity>
             </View>
         </View>
