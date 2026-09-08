@@ -1,7 +1,7 @@
 import { useTheme } from "@/context/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
-import { Modal, Pressable, Text, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { ActivityIndicator, Modal, Pressable, Text, TouchableOpacity, View } from "react-native";
 
 interface ConfirmDeleteModalProps {
     title: string;
@@ -17,6 +17,16 @@ export default function ConfirmDeleteModal({
     setDeleteConfirmVisible,
 }: ConfirmDeleteModalProps) {
     const { colors, isDark } = useTheme();
+    const [deleting, setDeleting] = useState(false);
+
+    const handleDelete = () => {
+        setDeleting(true);
+        setTimeout(() => {
+            setDeleting(false);
+            setDeleteConfirmVisible(false);
+            onDelete?.();
+        }, 3000);
+    };
 
     return (
         <Modal
@@ -113,21 +123,24 @@ export default function ConfirmDeleteModal({
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            onPress={() => {
-                                setDeleteConfirmVisible(false);
-                                onDelete?.();
-                            }}
+                            onPress={handleDelete}
+                            disabled={deleting}
                             style={{
                                 flex: 1,
                                 paddingVertical: 13,
                                 borderRadius: 12,
                                 backgroundColor: colors.error,
                                 alignItems: "center",
+                                opacity: deleting ? 0.7 : 1,
                             }}
                         >
-                            <Text style={{ fontSize: 15, fontWeight: "600", color: "#fff" }}>
-                                Delete
-                            </Text>
+                            {deleting ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
+                                <Text style={{ fontSize: 15, fontWeight: "600", color: "#fff" }}>
+                                    Delete
+                                </Text>
+                            )}
                         </TouchableOpacity>
                     </View>
                 </Pressable>
