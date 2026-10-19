@@ -2,7 +2,7 @@ import { useAuth } from "@/context/AuthContext";
 import { BudgetNode, BudgetPeriod, BudgetUpdate } from "@/types/budget";
 import { Timestamp } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import { Keyboard, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Keyboard, Text, TextInput, TouchableOpacity, View } from "react-native";
 import AmountField from "./drawers/AmountField";
 import DatePickerField from "./drawers/DatePickerField";
 
@@ -24,6 +24,7 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
     const { user } = useAuth();
     const [drawerOffset, setDrawerOffset] = useState(0);
     const [activeInput, setActiveInput] = useState<"title" | "amount" | null>(null);
+    const [saving, setSaving] = useState(false);
     const [title, setTitle] = useState(budget.title);
     const [amount, setAmount] = useState(() => {
         if ("income" in budget) {
@@ -82,7 +83,7 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
         };
     }, [activeInput]);
 
-    const handleSave = () => {
+    const handleSave = async () => {
         const baseAmount = parseFloat(amount);
         const update: BudgetUpdate = {
             title,
@@ -99,8 +100,13 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
                 (update as Partial<BudgetNode>).quantity = quantity; // persist unit count
             }
         }
-        onSave(update);
-        onClose();
+        setSaving(true);
+        try {
+            await Promise.resolve(onSave(update));
+            onClose();
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
@@ -229,17 +235,20 @@ export default function EditDrawer({ budget, colors, onClose, onSave }: EditDraw
                 {/* Save button */}
                 <TouchableOpacity
                     onPress={handleSave}
+                    disabled={saving}
                     style={{
-                        backgroundColor: "#377BBF",
+                        backgroundColor: saving ? "#9CA3AF" : "#377BBF",
                         paddingVertical: 14,
                         borderRadius: 12,
                         alignItems: "center",
                         marginTop: 16,
                     }}
                 >
-                    <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
-                        Save Changes
-                    </Text>
+                    {saving ? (
+                        <ActivityIndicator color="#fff" />
+                    ) : (
+                        <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>Save Changes</Text>
+                    )}
                 </TouchableOpacity>
             </View>
         </View>
